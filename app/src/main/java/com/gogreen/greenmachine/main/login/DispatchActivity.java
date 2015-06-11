@@ -29,17 +29,21 @@ public class DispatchActivity extends Activity {
                 if ((boolean) ParseUser.getCurrentUser().get("profileComplete")) {
                     // Start an intent for the logged in activity
                     startActivity(new Intent(this, MainActivity.class));
+                    finish();
                 } else {
                     Intent intent = new Intent(this, ProfileInitDispatchActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
+                    finish();
                 }
             } catch (Exception e) {
                 startActivity(new Intent(this, WelcomeActivity.class));
+                finish();
             }
         } else {
             // Start and intent for the logged out activity
             startActivity(new Intent(this, WelcomeActivity.class));
+            finish();
         }
     }
 }

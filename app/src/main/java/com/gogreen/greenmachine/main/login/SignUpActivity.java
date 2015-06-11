@@ -39,10 +39,10 @@ public class SignUpActivity extends ActionBarActivity {
         setContentView(R.layout.activity_signup);
 
         // Set up the toolbar
-        /*toolbar = (Toolbar) findViewById(R.id.tool_bar);
+        toolbar = (Toolbar) findViewById(R.id.tool_bar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeButtonEnabled(true);*/
+        getSupportActionBar().setHomeButtonEnabled(true);
 
         // Set up the signup form.
         usernameEditText = (EditText) findViewById(R.id.email_edit_text);
@@ -52,7 +52,7 @@ public class SignUpActivity extends ActionBarActivity {
         passwordAgainEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == R.id.edittext_action_signup ||
+                if (actionId == R.integer.action_signup ||
                         actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
                     signup();
                     return true;

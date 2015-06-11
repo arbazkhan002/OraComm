@@ -77,6 +77,7 @@ public class ProfileHotspotInfoActivity extends ActionBarActivity {
         Intent intent = new Intent(ProfileHotspotInfoActivity.this, DispatchActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
+        finish();
     }
 
     private void savePrivateProfile(Double hotspotLat, Double hotspotLong) {

@@ -1,85 +1,111 @@
-<LinearLayout
+<TableLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:weightSum="100"
     android:background="@color/primary"
     tools:context=".SignUpActivity" >
 
-    <ImageView android:id="@+id/icon"
-        android:src="@drawable/ic_logo"
-        android:layout_gravity="center"
-        android:layout_width="wrap_content"
+    <include
+        android:id="@+id/tool_bar"
+        layout="@layout/tool_bar">
+    </include>
+
+    <TableRow
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="10"
-        android:paddingTop="@dimen/tool_bar_top_padding"/>
+        android:background="@color/material_grey_200">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="15"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="@string/title_signup"
-        android:id="@+id/textView"
-        android:layout_gravity="center_horizontal"
-        android:textAlignment="center"
-        android:gravity="center_horizontal" />
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="55"
-        android:background="@color/material_grey_200"
-        android:padding="@dimen/profile_padding">
-        <EditText
-            android:id="@+id/email_edit_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/prompt_email"
-            android:inputType="textEmailAddress"
-            android:maxLines="1"
-            android:singleLine="true" />
-
-        <EditText
-            android:id="@+id/password_edit_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/prompt_password"
-            android:inputType="textPassword"
-            android:maxLines="1"
-            android:singleLine="true"
-            android:fontFamily="sans-serif" />
-
-        <EditText
-            android:id="@+id/password_again_edit_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/prompt_password_again"
-            android:inputType="textPassword"
-            android:maxLines="1"
-            android:singleLine="true"
-            android:imeActionId="@+id/edittext_action_signup"
-            android:imeActionLabel="@string/signup"
-            android:imeOptions="actionUnspecified"
-            android:fontFamily="sans-serif" />
-    </LinearLayout>
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="20"
-        android:background="@color/material_grey_200"
-        android:id="@+id/rl">
-        <com.gc.materialdesign.views.ButtonRectangle
-            android:id="@+id/action_button"
+        <ImageView android:id="@+id/icon"
+            android:src="@drawable/ic_logo"
+            android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/primary_button"
-            android:text="@string/setprofile"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:layout_margin="10dp"/>
-    </RelativeLayout>
-</LinearLayout>
+            android:paddingTop="@dimen/tool_bar_top_padding"/>
+    </TableRow>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/material_grey_200">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/title_signup"
+            android:id="@+id/textView"
+            android:layout_gravity="center_horizontal"
+            android:textAlignment="center"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="20dp"/>
+    </TableRow>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/material_grey_200"
+            android:padding="@dimen/profile_padding">
+            <EditText
+                android:id="@+id/email_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/prompt_email"
+                android:inputType="textEmailAddress"
+                android:maxLines="1"
+                android:singleLine="true" />
+
+            <EditText
+                android:id="@+id/password_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/prompt_password"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:fontFamily="sans-serif" />
+
+            <EditText
+                android:id="@+id/password_again_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/prompt_password_again"
+                android:inputType="textPassword"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:imeActionId="@integer/action_signup"
+                android:imeActionLabel="@string/signup"
+                android:imeOptions="actionUnspecified"
+                android:fontFamily="sans-serif" />
+        </LinearLayout>
+    </TableRow>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+
+            android:background="@color/material_grey_200"
+            android:id="@+id/rl">
+            <com.gc.materialdesign.views.ButtonRectangle
+                android:id="@+id/action_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/primary_button"
+                android:text="@string/setprofile"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
+                android:layout_margin="10dp"/>
+        </RelativeLayout>
+    </TableRow>
+
+</TableLayout>
