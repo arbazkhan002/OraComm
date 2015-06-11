@@ -388,6 +388,30 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
         }
     }
 
+    //Check if c1 is within c2's window of seconds
+    private boolean isInTimeWindow(Calendar c1, Calendar c2, int seconds){
+        Calendar after = c2;
+        after.add(Calendar.SECOND, seconds);
+        Date high_time = after.getTime();
+
+        Calendar before = c2;
+
+        //since 'add' works by reference, subtract the time added above first
+        before.add(Calendar.SECOND, -2*seconds);
+
+        Date low_time = before.getTime();
+        Date c1_time = c1.getTime();
+
+        //restore the calendar's time to original before returning control
+        before.add(Calendar.SECOND, seconds);
+        if ((c1_time.compareTo(high_time) <= 0) && (c1_time.compareTo(low_time) >= 0)){
+            return true;
+        }
+
+        return false;
+
+    }
+
     private boolean findDriver() {
         List<MatchRoute> matchRoute;
 
@@ -415,8 +439,15 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
             ArrayList<Hotspot> potentialHotspots = route.getPotentialHotspots();
             // First check if the potential hotspots is empty. It is cleared if there was a prev. match
             int remainingCapacity = route.getCapacity();
-            //Log.i(RidingHotspotSelectActivity.class.getSimpleName(),potentialHotspots.toString());
-            if (potentialHotspots.isEmpty() && remainingCapacity > 0) {
+
+            Calendar route_cal = Calendar.getInstance();
+            Calendar my_cal = Calendar.getInstance();
+            route_cal.setTime(route.getArriveBy());
+            my_cal.setTime(this.arriveByDate);
+
+            //Log.i(RidingHotspotSelectActivity.class.getSimpleName(),route.getArriveBy().toString() + " -> " + this.arriveByDate.toString()+ " " + isInTimeWindow(route_cal,my_cal,600));
+            //If the ride is in my time window, get a match
+            if (potentialHotspots.isEmpty() && remainingCapacity > 0 && isInTimeWindow(route_cal,my_cal,600)) {
                 // Use the hotspot
                 //Log.i(RidingHotspotSelectActivity.class.getSimpleName(),"Inside");
                 Hotspot routeHotspot = route.getHotspot();
@@ -451,7 +482,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                         }
                     }
                 }
-            } else if (remainingCapacity > 0){
+            } else if (remainingCapacity > 0 && isInTimeWindow(route_cal,my_cal,600)){
                 // Search for an intersection to initialize the hotspot and clear the online potentialHotspots list
                 Set<Hotspot> routesOnline = new HashSet<Hotspot>(potentialHotspots);
                 Set<Hotspot> intersection = new HashSet<Hotspot>(selectedHotspots);
