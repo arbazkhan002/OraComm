@@ -7,12 +7,12 @@ android {
             storePassword 'password'
         }
     }
-    compileSdkVersion 22
-    buildToolsVersion '22.0.1'
+    compileSdkVersion 21
+    buildToolsVersion '21.0.1'
     defaultConfig {
         applicationId "com.gogreen.greenmachine"
         minSdkVersion 19
-        targetSdkVersion 22
+        targetSdkVersion 21
         versionCode 1
         versionName "1.0"
     }
@@ -30,8 +30,8 @@ dependencies {
     compile fileTree(dir: 'libs', include: 'parseobjects-*.jar')
     compile 'de.hdodenhof:circleimageview:1.2.1'
     compile 'com.android.support:recyclerview-v7:21.0.+'
-    compile 'com.android.support:appcompat-v7:22.1.1'
-    compile 'com.google.android.gms:play-services:7.3.0'
+    compile 'com.android.support:appcompat-v7:21.0.3'
+    compile 'com.google.android.gms:play-services:7.5.0'
     compile 'com.parse.bolts:bolts-android:1.+'
     compile 'com.github.navasmdc:MaterialDesign:1.+@aar'
     compile 'com.nineoldandroids:library:2.4.0'

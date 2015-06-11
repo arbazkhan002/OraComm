@@ -13,7 +13,6 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,6 +22,10 @@ import android.widget.Toast;
 
 import com.gc.materialdesign.views.ButtonRectangle;
 import com.gogreen.greenmachine.R;
+import com.gogreen.greenmachine.distmatrix.Element;
+import com.gogreen.greenmachine.distmatrix.Result;
+import com.gogreen.greenmachine.distmatrix.RetrieveDistanceMatrix;
+import com.gogreen.greenmachine.distmatrix.Row;
 import com.gogreen.greenmachine.main.badges.BadgeActivity;
 import com.gogreen.greenmachine.main.login.DispatchActivity;
 import com.gogreen.greenmachine.main.match.DrivingActivity;
@@ -30,10 +33,6 @@ import com.gogreen.greenmachine.main.match.RidingActivity;
 import com.gogreen.greenmachine.main.navigation.AboutUsActivity;
 import com.gogreen.greenmachine.main.navigation.NavDrawerAdapter;
 import com.gogreen.greenmachine.main.navigation.SettingsActivity;
-import com.gogreen.greenmachine.distmatrix.Element;
-import com.gogreen.greenmachine.distmatrix.Result;
-import com.gogreen.greenmachine.distmatrix.RetrieveDistanceMatrix;
-import com.gogreen.greenmachine.distmatrix.Row;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
@@ -55,7 +54,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.api.client.http.GenericUrl;
-import com.parse.FunctionCallback;
 import com.parse.LogOutCallback;
 import com.parse.ParseCloud;
 import com.parse.ParseException;
@@ -467,7 +465,6 @@ public class MainActivity extends ActionBarActivity implements
             ParseGeoPoint parsePoint = h.getParseGeoPoint();
             LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
             if (m.getPosition().longitude == parsePoint.getLongitude() && m.getPosition().latitude == parsePoint.getLatitude()){
-                Log.i(MainActivity.class.getSimpleName(),"Hotspot found");
                 return h;
             }
             i += 1;
@@ -476,16 +473,14 @@ public class MainActivity extends ActionBarActivity implements
     }
 
     public void updateMarkerTags(Marker m){
-        //TODO:oncoming driver's hotspot should be at this marker
         Hotspot h = getMyHotspot(m);
         if (h == null){
-            //Log.i(MainActivity.class.getSimpleName(),"h is null");
             m.setTitle("Next Pickup: N/A");
             m.setSnippet("no drivers yet");
             return;
         }
         else {
-            String origins="";
+            String origins = "";
             try {
                 Marker marray[] = new Marker[]{m};
                 new updateMarkers().execute(new Tuple<Hotspot,Marker[]>(h,marray));
@@ -494,51 +489,6 @@ public class MainActivity extends ActionBarActivity implements
                 e.printStackTrace();
             }
         }
-        /*
-        boolean condition =(getHotspotId(m)==6);
-        condition=getMyHotspot(m).getName().startsWith("Hills");
-        boolean myHotspot=condition;
-        if (myHotspot && simulateStep<simulatePoints.size()) {
-            String origins=Double.toString(simulatePoints.get(simulateStep).latitude)+","+Double.toString(simulatePoints.get(simulateStep).longitude);
-            String destinations=Double.toString(m.getPosition().latitude)+","+Double.toString(m.getPosition().longitude);
-            String mode="driving";
-            String language="US-EN";
-            String key=getString(R.string.google_maps_key);
-            String urlString="https://maps.googleapis.com/maps/api/distancematrix/json";
-
-            GenericUrl url = new GenericUrl(urlString);
-            url.put("origins", origins);
-            url.put("destinations", destinations);
-            url.put("mode", mode);
-            url.put("language", language);
-            url.put("key", key);
-            int timeValue=-1;
-            //Log.i(MainActivity.class.getSimpleName(),"url:"+url.toString());
-            try {
-                Result r = new RetrieveDistanceMatrix().execute(url).get();
-                List<Row> rows = r.rows;
-                for (Row row : rows) {
-                    List<Element> elements = row.elements;
-                    for (Element e : elements) {
-                        timeValue=e.duration.value;
-                    }
-                }
-
-            }
-            catch (Exception e){
-                e.printStackTrace();
-            }
-
-            if (timeValue!=-1) {
-                m.setTitle("Next Pickup: "+(timeValue/60)+" min");
-                m.setSnippet("Text @ 650-290-2120");
-            }
-            else {
-                m.setTitle("Next Pickup: N/A");
-                m.setSnippet("no drivers yet");
-            }
-        }
-        */
     }
     
     public ArrayList<PublicProfile> getActiveDrivers(Hotspot h){
@@ -725,12 +675,10 @@ public class MainActivity extends ActionBarActivity implements
             String origins = "";
             Hotspot h = params[0].x;
             HashMap<String, Object> cloudParams = new HashMap<String, Object>();
-            //Log.i(MainActivity.class.getSimpleName(), h.getHotspotId() + ":" + h.getObjectId());
             cloudParams.put("hotspotObj", h.getObjectId());
             try {
                 List<ParseGeoPoint> result = ParseCloud.callFunction("getActiveDrivers", cloudParams);
 
-                //Log.i(MainActivity.class.getSimpleName(), result.toString());
                 for (ParseGeoPoint p : result) {
                     origins += p.getLatitude() + "," + p.getLongitude() + "|";
                 }
@@ -772,7 +720,6 @@ public class MainActivity extends ActionBarActivity implements
             url.put("mode", mode);
             url.put("language", language);
             url.put("key", key);
-            //Log.i(MainActivity.class.getSimpleName(), url.toString());
             try {
                 Result r = new RetrieveDistanceMatrix().execute(url).get();
                 List<Row> rows = r.rows;
@@ -788,10 +735,9 @@ public class MainActivity extends ActionBarActivity implements
                 e.printStackTrace();
                 return;
             }
-            //Log.i(MainActivity.class.getSimpleName(), Integer.toString(minTime));
             //if minTime has not been reduced, possibly no drivers on the hotspot
-            if (minTime<1440){
-                (result.y)[0].setTitle("Next Pickup: "+(minTime/60)+" min");
+            if (minTime < 1440){
+                (result.y)[0].setTitle("Next Pickup: " + (minTime / 60) + " min");
                 (result.y)[0].setSnippet("Text @ 650-290-2120");
             }
             else {

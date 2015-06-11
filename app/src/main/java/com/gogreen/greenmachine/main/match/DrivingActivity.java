@@ -10,19 +10,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TimePicker;
 
 import com.gc.materialdesign.views.ButtonRectangle;
 import com.gogreen.greenmachine.R;
-import com.gogreen.greenmachine.parseobjects.Hotspot;
-import com.gogreen.greenmachine.parseobjects.MatchRequest;
-import com.gogreen.greenmachine.parseobjects.MatchRoute;
+import com.gogreen.greenmachine.parseobjects.PrivateProfile;
+import com.parse.ParseException;
+import com.parse.ParseUser;
 
 import java.util.Calendar;
-import java.util.Set;
 
 
 public class DrivingActivity extends ActionBarActivity {
@@ -30,13 +28,10 @@ public class DrivingActivity extends ActionBarActivity {
     private Spinner mStartSpinner;
     private Spinner mDestSpinner;
 
-    private Set<Hotspot> hotspots;
-    private MatchRequest driverRequest;
-    private MatchRoute matchRoute;
-
     private Toolbar toolbar;
 
     // UI references.
+    private EditText driverCarEditText;
     private EditText matchByEditText;
     private EditText arriveByEditText;
 
@@ -51,6 +46,11 @@ public class DrivingActivity extends ActionBarActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
 
+        // Set up EditText for Car Type
+        this.driverCarEditText = (EditText) findViewById(R.id.driver_car_info);
+        setDefaultCar();
+
+        // Set up spinners
         mCarSpinner = (Spinner) findViewById(R.id.car_spinner);
         ArrayAdapter<CharSequence> carAdapter = ArrayAdapter.createFromResource(this,
                 R.array.car_seats_array, android.R.layout.simple_spinner_item);
@@ -81,7 +81,6 @@ public class DrivingActivity extends ActionBarActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
-                // your code here
             }
 
         });
@@ -97,7 +96,6 @@ public class DrivingActivity extends ActionBarActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
-                // your code here
             }
 
         });
@@ -196,12 +194,25 @@ public class DrivingActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void setDefaultCar() {
+        ParseUser currUser = ParseUser.getCurrentUser();
+        PrivateProfile privProfile = (PrivateProfile) currUser.get("privateProfile");
+        try {
+            privProfile.fetchIfNeeded();
+        } catch(ParseException e) {
+            // Handle fetch fail
+        }
+
+        this.driverCarEditText.setText(privProfile.getDriverCar());
+    }
+
     private void startNextActivity() {
         Intent intent = new Intent(DrivingActivity.this, DrivingHotspotSelectActivity.class);
         intent.putExtra("capacity", Integer.parseInt(mCarSpinner.getSelectedItem().toString()));
         intent.putExtra("matchDate", matchByEditText.getText().toString());
         intent.putExtra("arriveDate", arriveByEditText.getText().toString());
         intent.putExtra("destination", mDestSpinner.getSelectedItem().toString());
+        intent.putExtra("driverCar", driverCarEditText.getText().toString());
         startActivity(intent);
     }
 }
