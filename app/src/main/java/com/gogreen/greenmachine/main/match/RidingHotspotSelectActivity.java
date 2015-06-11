@@ -415,8 +415,10 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
             ArrayList<Hotspot> potentialHotspots = route.getPotentialHotspots();
             // First check if the potential hotspots is empty. It is cleared if there was a prev. match
             int remainingCapacity = route.getCapacity();
+            //Log.i(RidingHotspotSelectActivity.class.getSimpleName(),potentialHotspots.toString());
             if (potentialHotspots.isEmpty() && remainingCapacity > 0) {
                 // Use the hotspot
+                //Log.i(RidingHotspotSelectActivity.class.getSimpleName(),"Inside");
                 Hotspot routeHotspot = route.getHotspot();
                 Utils.getInstance().fetchParseObject(routeHotspot);
 
