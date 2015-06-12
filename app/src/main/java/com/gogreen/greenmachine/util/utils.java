@@ -32,7 +32,6 @@ public class Utils {
         } catch (java.text.ParseException e) {
             e.printStackTrace();
         }
-        Log.i(RidingHotspotSelectActivity.class.getSimpleName(), "input:" + input + " " + "orig:" + s + "parsed:" + t);
         return t;
     }
 

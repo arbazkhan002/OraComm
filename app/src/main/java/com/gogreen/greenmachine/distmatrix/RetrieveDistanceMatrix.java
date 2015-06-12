@@ -34,15 +34,7 @@ public class RetrieveDistanceMatrix extends AsyncTask<GenericUrl,Result,Result> 
         try {
             HttpRequest request = requestFactory.buildGetRequest(urls[0]);
             HttpResponse httpResponse = request.execute();
-            //Log.i(RetrieveDistanceMatrix.class.getSimpleName(),"httpResponse:"+httpResponse.toString());
             distResult = httpResponse.parseAs(Result.class);
-            /*List<Row> rows = distResult.rows;
-            for (Row row : rows) {
-                List<Element> elements = row.elements;
-                for (Element e : elements) {
-                    Log.i(RetrieveDistanceMatrix.class.getSimpleName(), e.distance.text + " " + e.distance.value);
-                }
-            }*/
             return distResult;
         }
         catch (IOException e){

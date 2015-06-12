@@ -32,23 +32,30 @@ import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.SignInButton;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.http.GenericUrl;
 import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseUser;
-import com.parse.SignUpCallback;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import com.parse.SignUpCallback;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.JsonObjectParser;
+import com.google.api.client.json.jackson.JacksonFactory;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 
@@ -216,11 +223,11 @@ public class WelcomeActivity extends ActionBarActivity {
                 public void done(ParseUser user, ParseException e) {
                     if (e != null) {
                         // Show the error message
-                        Log.i(WelcomeActivity.class.getSimpleName(),"Attempting Done failed.");
+                        Log.i(WelcomeActivity.class.getSimpleName(), "Attempting Done failed.");
                         Toast.makeText(WelcomeActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
                     } else {
                         // Start an intent for the dispatch activity
-                        Log.i(WelcomeActivity.class.getSimpleName(),"Attempting Done passed.");
+                        Log.i(WelcomeActivity.class.getSimpleName(), "Attempting Done passed.");
                         Intent intent = new Intent(WelcomeActivity.this, DispatchActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
@@ -239,84 +246,125 @@ public class WelcomeActivity extends ActionBarActivity {
         protected Object doInBackground(Object[] params) {
             try {
                 final String token = fetchToken();
-                String url = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=" + token;
-                HttpClient httpclient = new DefaultHttpClient();
-                HttpResponse response = httpclient.execute(new HttpGet(url));
-                StatusLine statusLine = response.getStatusLine();
-                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    response.getEntity().writeTo(out);
-                    String responseString = out.toString();
-                    out.close();
-                    JSONObject jObject = new JSONObject(responseString);
-                    final ParseUser user = new ParseUser();
-                    final String username = jObject.getString("name");
-                    user.setUsername(this.mEmail);
-                    user.setEmail(this.mEmail);
-                    user.setPassword(token);
-                    user.put("profileComplete", false);
+                final HttpTransport HTTP_TRANSPORT = AndroidHttp.newCompatibleTransport();
+                final JsonFactory JSON_FACTORY = new JacksonFactory();
+                HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
+                    @Override
+                    public void initialize(HttpRequest request) {
+                        request.setParser(new JsonObjectParser(JSON_FACTORY));
+                    }
+                });
+                String urlStr = "https://www.googleapis.com/oauth2/v1/userinfo";
+                GenericUrl url = new GenericUrl(urlStr);
+                url.put("access_token", token);
+                HttpRequest request = requestFactory.buildGetRequest(url);
+                HttpResponse response = request.execute();
+                try {
+                    // process the HTTP response object
+                    if (response.isSuccessStatusCode()) {
+                        String responseString = getStringFromInputStream(response.getContent());
+                        JSONObject jObject = new JSONObject(responseString);
+                        final ParseUser user = new ParseUser();
+                        final String username = jObject.getString("name");
+                        user.setUsername(this.mEmail);
+                        user.setEmail(this.mEmail);
+                        user.setPassword(token);
+                        user.put("profileComplete", false);
 
-                    String[] nameParts = username.split("\\s+");
-                    firstName = nameParts[0];
-                    lastName = nameParts[1];
+                        String[] nameParts = username.split("\\s+");
+                        firstName = nameParts[0];
+                        lastName = nameParts[1];
 
-                    // Call the parseobjects signup method
-                    user.signUpInBackground(new SignUpCallback() {
-                        @Override
-                        public void done(ParseException e) {
-                            //dialog.dismiss();
-                            if (e != null) {
-                                dialog.dismiss();
-                                attemptLogin(user, token, mEmail);
-                            } else {
-                                // Start an intent for the dispatch activity
-                                ParseUser curUser = ParseUser.getCurrentUser();
-                                PrivateProfile privProfile = new PrivateProfile();
+                        // Call the parseobjects signup method
+                        user.signUpInBackground(new SignUpCallback() {
+                            @Override
+                            public void done(ParseException e) {
+                                //dialog.dismiss();
+                                if (e != null) {
+                                    dialog.dismiss();
+                                    attemptLogin(user, token, mEmail);
+                                } else {
+                                    // Start an intent for the dispatch activity
+                                    ParseUser curUser = ParseUser.getCurrentUser();
+                                    PrivateProfile privProfile = new PrivateProfile();
 
-                                privProfile.initializePrivateProfile(curUser, firstName, lastName, "", "",
-                                        true, "", "9:00 AM", "5:00 PM", new ArrayList<ParseGeoPoint>());
-                                try {
-                                    privProfile.save();
-                                    curUser.put("privateProfile", privProfile);
-                                    curUser.saveInBackground();
-                                } catch (ParseException err) {
+                                    privProfile.initializePrivateProfile(curUser, firstName, lastName, "", "",
+                                            true, "", "9:00 AM", "5:00 PM", new ArrayList<ParseGeoPoint>());
+                                    try {
+                                        privProfile.save();
+                                        curUser.put("privateProfile", privProfile);
+                                        curUser.saveInBackground();
+                                    } catch (ParseException err) {
+                                    }
+
+                                    PublicProfile pubProfile = new PublicProfile();
+                                    pubProfile.initializePublicProfile(curUser, firstName, lastName, "");
+                                    try {
+                                        pubProfile.save();
+                                        curUser.put("publicProfile", pubProfile);
+                                        curUser.saveInBackground();
+                                    } catch (ParseException error) {
+
+                                    }
+
+                                    dialog.dismiss();
+                                    Intent intent = new Intent(WelcomeActivity.this, DispatchActivity.class);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(intent);
                                 }
-
-                                PublicProfile pubProfile = new PublicProfile();
-                                pubProfile.initializePublicProfile(curUser, firstName, lastName, "");
-                                try {
-                                    pubProfile.save();
-                                    curUser.put("publicProfile", pubProfile);
-                                    curUser.saveInBackground();
-                                } catch (ParseException error) {
-
-                                }
-
-                                dialog.dismiss();
-                                Intent intent = new Intent(WelcomeActivity.this, DispatchActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(intent);
                             }
-                        }
-                    });
+                        });
+                    }
+                    else {
+                        //Closes the connection.
+                        String msg = response.getStatusMessage();
+                        response.disconnect();
+                        throw new IOException(msg);
+                    }
 
-                } else {
-                    //Closes the connection.
-                    response.getEntity().getContent().close();
-                    throw new IOException(statusLine.getReasonPhrase());
+                } finally {
+                    response.disconnect();
                 }
                 //Preferences.saveString(Constants.KEY_BLOGGER_TOKEN, token);
             } catch (IOException e) {
                 // The fetchToken() method handles Google-specific exceptions,
                 // so this indicates something went wrong at a higher level.
                 // TIP: Check for network connectivity before starting the AsyncTask.
+                e.printStackTrace();
             } catch (JSONException e) {
-                // The fetchToken() method handles Google-specific exceptions,
-                // so this indicates something went wrong at a higher level.
-                // TIP: Check for network connectivity before starting the AsyncTask.
                 e.printStackTrace();
             }
             return null;
+        }
+
+        // convert InputStream to String
+        private String getStringFromInputStream(InputStream is) {
+
+            BufferedReader br = null;
+            StringBuilder sb = new StringBuilder();
+
+            String line;
+            try {
+
+                br = new BufferedReader(new InputStreamReader(is));
+                while ((line = br.readLine()) != null) {
+                    sb.append(line);
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (br != null) {
+                    try {
+                        br.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            return sb.toString();
+
         }
 
 

@@ -136,7 +136,6 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        Log.i(DrivingHotspotSelectActivity.class.getSimpleName(), "Connected to GoogleApiClient");
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
         if (mLastLocation != null) {
@@ -308,7 +307,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
     }
 
     @Override
-    public boolean onMarkerClick(Marker m){
+    public boolean onMarkerClick(Marker m) {
         if (m.getAlpha() == 0.75f) {
             setMarker(m);
         }
@@ -319,7 +318,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
         return true;
     }
 
-    public void setMarker(Marker m){
+    public void setMarker(Marker m) {
         m.setIcon(BitmapDescriptorFactory.defaultMarker(150));
         m.setAlpha(1.0f);
         // Grab location & add to Hotspot set
@@ -342,7 +341,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
         return (p1.getLatitude() == p2.getLatitude() && p1.getLongitude() == p2.getLongitude());
     }
 
-    public void resetMarker(Marker m){
+    public void resetMarker(Marker m) {
         m.setAlpha(0.75f);
         m.setIcon(BitmapDescriptorFactory.defaultMarker(30));
 
@@ -389,22 +388,22 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
     }
 
     //Check if c1 is within c2's window of seconds
-    private boolean isInTimeWindow(Calendar c1, Calendar c2, int seconds){
+    private boolean isInTimeWindow(Calendar c1, Calendar c2, int seconds) {
         Calendar after = c2;
         after.add(Calendar.SECOND, seconds);
-        Date high_time = after.getTime();
+        Date highTime = after.getTime();
 
         Calendar before = c2;
 
         //since 'add' works by reference, subtract the time added above first
         before.add(Calendar.SECOND, -2*seconds);
 
-        Date low_time = before.getTime();
-        Date c1_time = c1.getTime();
+        Date lowTime = before.getTime();
+        Date c1Time = c1.getTime();
 
         //restore the calendar's time to original before returning control
         before.add(Calendar.SECOND, seconds);
-        if ((c1_time.compareTo(high_time) <= 0) && (c1_time.compareTo(low_time) >= 0)){
+        if ((c1Time.compareTo(highTime) <= 0) && (c1Time.compareTo(lowTime) >= 0)) {
             return true;
         }
 
@@ -445,11 +444,11 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
             route_cal.setTime(route.getArriveBy());
             my_cal.setTime(this.arriveByDate);
 
-            //Log.i(RidingHotspotSelectActivity.class.getSimpleName(),route.getArriveBy().toString() + " -> " + this.arriveByDate.toString()+ " " + isInTimeWindow(route_cal,my_cal,600));
+
             //If the ride is in my time window, get a match
             if (potentialHotspots.isEmpty() && remainingCapacity > 0 && isInTimeWindow(route_cal,my_cal,600)) {
                 // Use the hotspot
-                //Log.i(RidingHotspotSelectActivity.class.getSimpleName(),"Inside");
+
                 Hotspot routeHotspot = route.getHotspot();
                 Utils.getInstance().fetchParseObject(routeHotspot);
 
@@ -482,7 +481,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                         }
                     }
                 }
-            } else if (remainingCapacity > 0 && isInTimeWindow(route_cal,my_cal,600)){
+            } else if (remainingCapacity > 0 && isInTimeWindow(route_cal,my_cal,600)) {
                 // Search for an intersection to initialize the hotspot and clear the online potentialHotspots list
                 Set<Hotspot> routesOnline = new HashSet<Hotspot>(potentialHotspots);
                 Set<Hotspot> intersection = new HashSet<Hotspot>(selectedHotspots);
