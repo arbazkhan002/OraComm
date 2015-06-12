@@ -1,235 +1,174 @@
-<merge xmlns:android="http://schemas.android.com/apk/res/android"
+<TableLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".SettingsActivity" >
+    tools:context=".SettingsActivity"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
 
-    <ScrollView
-        android:id="@+id/settings_form"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <include
+        android:id="@+id/tool_bar"
+        layout="@layout/tool_bar">
+    </include>
 
-        <TableLayout
-            style="@style/ProfileFormContainer">
+    <TableRow
+        android:id="@+id/first_name_row"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp">
 
-            <include
-                android:id="@+id/tool_bar"
-                layout="@layout/tool_bar">
-            </include>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/prompt_first_name"
+            android:id="@+id/first_name_text_view"
+            android:layout_weight="1"/>
 
-            <TableRow
-                android:id="@+id/first_name_row"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:paddingLeft="30px"
-                android:paddingRight="30px">
+        <EditText
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:id="@+id/first_name_edit_text"
+            android:layout_weight="3"
+            android:inputType=
+                "textPersonName|textCapSentences|textAutoCorrect"/>
+    </TableRow>
 
-                <TextView
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="@string/prompt_first_name"
-                    android:id="@+id/first_name_text_view"
-                    android:layout_weight="1"/>
+    <TableRow
+        android:id="@+id/last_name_row"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp">
 
-                <EditText
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:inputType="textPersonName"
-                    android:ems="10"
-                    android:id="@+id/first_name_edit_text"
-                    android:layout_weight="3"/>
-            </TableRow>
+        <TextView
+            android:layout_width="0px"
+            android:layout_height="wrap_content"
+            android:text="@string/prompt_last_name"
+            android:id="@+id/last_name_text_view"
+            android:layout_weight="1"/>
 
-            <TableRow
-                android:id="@+id/last_name_row"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:paddingLeft="30px"
-                android:paddingRight="30px">
+        <EditText
+            android:layout_width="0px"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:id="@+id/last_name_edit_text"
+            android:layout_weight="3"
+            android:inputType=
+                "textPersonName|textCapSentences|textAutoCorrect"/>
+    </TableRow>
 
-                <TextView
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="@string/prompt_last_name"
-                    android:id="@+id/last_name_text_view"
-                    android:layout_weight="1"/>
+    <TableRow
+        android:id="@+id/home_city_row"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp">
 
-                <EditText
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:inputType="textPersonName"
-                    android:ems="10"
-                    android:id="@+id/last_name_edit_text"
-                    android:layout_weight="3"/>
-            </TableRow>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/prompt_home_city"
+            android:id="@+id/home_city_text_view"
+            android:layout_weight="1"/>
 
-            <TableRow
-                android:id="@+id/home_city_row"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:paddingLeft="30px"
-                android:paddingRight="30px">
+        <EditText
+            android:layout_width="0px"
+            android:layout_height="0dp"
+            android:ems="10"
+            android:id="@+id/home_city_edit_text"
+            android:layout_weight="3"
+            android:inputType=
+                "textCapSentences|textAutoCorrect"/>
+    </TableRow>
 
-                <TextView
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="@string/prompt_home_city"
-                    android:id="@+id/home_city_text_view"
-                    android:layout_weight="1"/>
+    <TableRow
+        android:id="@+id/phone_number_row"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp">
 
-                <EditText
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:inputType="textPersonName"
-                    android:ems="10"
-                    android:id="@+id/home_city_edit_text"
-                    android:layout_weight="3"/>
-            </TableRow>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/prompt_phone"
+            android:id="@+id/phone_text_view"
+            android:layout_weight="1"/>
 
-            <TableRow
-                android:id="@+id/phone_number_row"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:paddingLeft="30px"
-                android:paddingRight="30px">
+        <EditText
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:inputType="phone"
+            android:ems="10"
+            android:id="@+id/phone_edit_text"
+            android:layout_weight="3"/>
+    </TableRow>
 
-                <TextView
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="@string/prompt_phone"
-                    android:id="@+id/phone_text_view"
-                    android:layout_weight="1"/>
+    <TableRow
+        android:id="@+id/arrive_hq_by_row"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp">
 
-                <EditText
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:inputType="phone"
-                    android:ems="10"
-                    android:id="@+id/phone_edit_text"
-                    android:layout_weight="3"/>
-            </TableRow>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/prompt_arrive_hq_by"
+            android:id="@+id/arrive_hq_by_text_view"
+            android:layout_weight="2"/>
 
-            <TableRow
-                android:id="@+id/driver_row"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:paddingLeft="30px"
-                android:paddingRight="30px">
+        <EditText
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:inputType="time"
+            android:ems="10"
+            android:id="@+id/arrive_hq_by_edit_text"
+            android:windowSoftInputMode="stateHidden"
+            android:focusable="false"
+            android:layout_weight="2"/>
 
-                <Switch
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/switch_label_driving"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentTop="true"
-                    android:id="@+id/driver_switch"/>
-            </TableRow>
+    </TableRow>
 
-            <TableRow
-                android:id="@+id/driver_car_row"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:paddingLeft="30px"
-                android:paddingRight="30px">
+    <TableRow
+        android:id="@+id/arrive_home_by_row"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp">
 
-                <TextView
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="@string/prompt_car"
-                    android:id="@+id/driver_car_text_view"
-                    android:layout_weight="1"/>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/prompt_arrive_home_by"
+            android:id="@+id/arrive_home_by_text_view"
+            android:layout_weight="2"/>
 
-                <EditText
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/driver_car_edit_text"
-                    android:layout_weight="3"/>
-            </TableRow>
+        <EditText
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:inputType="time"
+            android:ems="10"
+            android:id="@+id/arrive_home_by_edit_text"
+            android:windowSoftInputMode="stateHidden"
+            android:focusable="false"
+            android:layout_weight="2"/>
 
-            <TableRow
-                android:id="@+id/arrive_hq_by_row"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:paddingLeft="30px"
-                android:paddingRight="30px">
+    </TableRow>
 
-                <TextView
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="@string/prompt_arrive_hq_by"
-                    android:id="@+id/arrive_hq_by_text_view"
-                    android:layout_weight="2"/>
+    <TableRow
+        android:id="@+id/submit_button_row"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gravity="center">
 
-                <EditText
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:inputType="time"
-                    android:ems="10"
-                    android:id="@+id/arrive_hq_by_edit_text"
-                    android:windowSoftInputMode="stateHidden"
-                    android:layout_weight="2"/>
-
-            </TableRow>
-
-            <TableRow
-                android:id="@+id/arrive_home_by_row"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:paddingLeft="30px"
-                android:paddingRight="30px">
-
-                <TextView
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="@string/prompt_arrive_home_by"
-                    android:id="@+id/arrive_home_by_text_view"
-                    android:layout_weight="2"/>
-
-                <EditText
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:inputType="time"
-                    android:ems="10"
-                    android:id="@+id/arrive_home_by_edit_text"
-                    android:windowSoftInputMode="stateHidden"
-                    android:layout_weight="2"/>
-
-            </TableRow>
-
-            <TableRow
-                android:id="@+id/preferred_hotspots_row"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
-
-                <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-                    android:id="@+id/map"
-                    android:layout_width="0dp"
-                    android:layout_height="200dp"
-                    android:layout_weight="1"
-                    android:layout_below="@+id/submit_button_row"
-                    tools:context="com.gogreen.greenmachine.main.profile.ProfileHotspotInfoActivity"
-                    android:name="com.google.android.gms.maps.SupportMapFragment"/>
-
-            </TableRow>
-
-            <TableRow
-                android:id="@+id/submit_button_row"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:gravity="center">
-
-                <Button
-                    style="@style/PrimaryButton"
-                    android:id="@+id/submit_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/text_dim_top"
-                    android:layout_alignParentBottom="true"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentStart="true"
-                    android:layout_alignParentEnd="true"
-                    android:text="@string/submit" />
-            </TableRow>
-
-        </TableLayout>
-    </ScrollView>
-</merge>
+        <Button
+            style="@style/PrimaryButton"
+            android:id="@+id/submit_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/text_dim_top"
+            android:text="@string/submit" />
+    </TableRow>
+</TableLayout>

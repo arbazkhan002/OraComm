@@ -1,8 +1,8 @@
 <resources>
 
     <!-- Strings related to login -->
-    <string name="login">Sign in</string>
-    <string name="signup">New User</string>
+    <string name="login">Login</string>
+    <string name="signup">Sign Up</string>
     <string name="signgoogle">Sign in with Google</string>
     <string name="logout">Log out</string>
 

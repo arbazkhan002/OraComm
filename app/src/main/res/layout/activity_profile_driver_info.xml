@@ -67,7 +67,9 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/prompt_car"
                 android:maxLines="1"
-                android:singleLine="true" />
+                android:singleLine="true"
+                android:inputType=
+                    "textCapSentences|textAutoCorrect"/>
 
             <TextView
                 android:layout_width="wrap_content"

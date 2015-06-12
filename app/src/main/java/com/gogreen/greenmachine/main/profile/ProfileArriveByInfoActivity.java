@@ -1,5 +1,6 @@
 package com.gogreen.greenmachine.main.profile;
 
+import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,7 +8,9 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TimePicker;
@@ -144,5 +147,16 @@ public class ProfileArriveByInfoActivity extends ActionBarActivity {
         privProfile.setArriveHQBy(arriveHQBy);
         privProfile.setArriveHomeBy(arriveHomeBy);
         privProfile.saveInBackground();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        hideSoftKeyboard(ProfileArriveByInfoActivity.this);
+        return false;
+    }
+
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager = (InputMethodManager)  activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
     }
 }

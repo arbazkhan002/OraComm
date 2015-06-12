@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <integer name="action_signup">10</integer>
+    <integer name="action_signup">0</integer>
+    <integer name="action_login">0</integer>
 </resources>

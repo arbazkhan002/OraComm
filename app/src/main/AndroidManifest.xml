@@ -52,14 +52,12 @@
             android:name=".main.login.SignUpActivity"
             android:label="@string/title_activity_signup"
             android:parentActivityName=".main.WelcomeActivity"
-            android:windowSoftInputMode="stateHidden"
-            android:screenOrientation="portrait" >
+            android:windowSoftInputMode="stateHidden">
         </activity>
         <activity
             android:name=".main.login.LoginActivity"
             android:label="@string/title_activity_login"
-            android:parentActivityName=".main.WelcomeActivity"
-            android:screenOrientation="portrait" >
+            android:parentActivityName=".main.WelcomeActivity">
         </activity>
         <activity
             android:name=".main.MainActivity"
@@ -71,7 +69,8 @@
         </activity>
         <activity
             android:name=".main.navigation.SettingsActivity"
-            android:label="@string/title_activity_settings" >
+            android:label="@string/title_activity_settings"
+            android:windowSoftInputMode="stateHidden">
         </activity>
         <activity
             android:name=".main.match.DrivingActivity"

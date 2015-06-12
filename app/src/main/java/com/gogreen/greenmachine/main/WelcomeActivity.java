@@ -98,15 +98,6 @@ public class WelcomeActivity extends ActionBarActivity {
                 startActivity(new Intent(WelcomeActivity.this, SignUpActivity.class));
             }
         });
-
-        // Sign up button click handler
-        SignInButton signGoogleButton = (SignInButton) findViewById(R.id.signgoogle_button);
-        signGoogleButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Starts an intent for the sign up activity
-                login();
-            }
-        });
     }
 
     @Override

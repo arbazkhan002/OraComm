@@ -1,29 +1,23 @@
 package com.gogreen.greenmachine.main.navigation;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.Switch;
-import android.widget.TableRow;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.gogreen.greenmachine.R;
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
 import com.gogreen.greenmachine.util.Utils;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.parse.ParseException;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
@@ -39,18 +33,13 @@ public class SettingsActivity extends ActionBarActivity {
     private EditText mLastName;
     private EditText mHomeCity;
     private EditText mPhone;
-    private Switch mDriving;
-    private EditText mCar;
     private EditText mArriveHQBy;
     private EditText mArriveHomeBy;
-
-    private GoogleMap mMap;
 
     private static PrivateProfile userProfile;
     private boolean isDriver;
 
     private Toolbar toolbar;
-    private TableRow carReveal;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,8 +60,6 @@ public class SettingsActivity extends ActionBarActivity {
         mLastName = (EditText) findViewById(R.id.last_name_edit_text);
         mHomeCity = (EditText) findViewById(R.id.home_city_edit_text);
         mPhone = (EditText) findViewById(R.id.phone_edit_text);
-        mDriving = (Switch) findViewById(R.id.driver_switch);
-        mCar = (EditText) findViewById(R.id.driver_car_edit_text);
         mArriveHQBy = (EditText) findViewById(R.id.arrive_hq_by_edit_text);
         mArriveHomeBy = (EditText) findViewById(R.id.arrive_home_by_edit_text);
 
@@ -81,31 +68,8 @@ public class SettingsActivity extends ActionBarActivity {
         mLastName.setText(userProfile.getLastName());
         mHomeCity.setText(userProfile.getHomeCity());
         mPhone.setText(userProfile.getPhoneNumber());
-        mCar.setText(userProfile.getDriverCar());
         mArriveHQBy.setText(userProfile.getArriveHQBy());
         mArriveHomeBy.setText(userProfile.getArriveHomeBy());
-
-        // Set up Edit Texts and Switch
-        carReveal = (TableRow) findViewById(R.id.driver_car_row);
-        isDriver = userProfile.getDriverStatus();
-        mDriving.setChecked(isDriver);
-        if (!isDriver){
-            carReveal.setVisibility(View.INVISIBLE);
-        }
-
-        mDriving.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (mDriving.isChecked()) {
-                    // The toggle is enabled
-                    isDriver = true;
-                    carReveal.setVisibility(View.VISIBLE);
-                } else {
-                    // The toggle is disabled
-                    isDriver = false;
-                    carReveal.setVisibility(View.INVISIBLE);
-                }
-            }
-        });
 
         mArriveHQBy.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -183,8 +147,6 @@ public class SettingsActivity extends ActionBarActivity {
                 updateProfile(userProfile);
             }
         });
-
-        setUpMapIfNeeded();
     }
 
     @Override
@@ -196,53 +158,6 @@ public class SettingsActivity extends ActionBarActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    /**
-     * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
-     * installed) and the map has not already been instantiated.. This will ensure that we only ever
-     * call {@link #setUpMap()} once when {@link #mMap} is not null.
-     * <p/>
-     * If it isn't installed {@link com.google.android.gms.maps.SupportMapFragment} (and
-     * {@link com.google.android.gms.maps.MapView MapView}) will show a prompt for the user to
-     * install/update the Google Play services APK on their device.
-     * <p/>
-     * A user can return to this FragmentActivity after following the prompt and correctly
-     * installing/updating/enabling the Google Play services. Since the FragmentActivity may not
-     * have been completely destroyed during this process (it is likely that it would only be
-     * stopped or paused), {@link #onCreate(Bundle)} may not be called again so we should call this
-     * method in {@link #onResume()} to guarantee that it will be called.
-     */
-    private void setUpMapIfNeeded() {
-        // Do a null check to confirm that we have not already instantiated the map.
-        if (mMap == null) {
-            // Try to obtain the map from the SupportMapFragment.
-            try {
-                mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
-                        .getMap();
-            } catch (NullPointerException e) {
-                // Handle null pointer exception
-            }
-            // Check if we were successful in obtaining the map.
-            if (mMap != null) {
-                setUpMap();
-            }
-        }
-    }
-
-    /**
-     * This is where we can add markers or lines, add listeners or move the camera. In this case, we
-     * just add a marker near Africa.
-     * <p/>
-     * This should only be called once and when we are sure that {@link #mMap} is not null.
-     */
-    private void setUpMap() {
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(37.775, -122.4183333))      // Sets the center of the map
-                .zoom(10)
-                .build();                   // Creates a CameraPosition from the builder
-        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-        mMap.addMarker(new MarkerOptions().position(new LatLng(37.775, -122.4183333)).title("San Francisco"));
     }
 
     private void updateProfile(PrivateProfile p) {
@@ -257,8 +172,6 @@ public class SettingsActivity extends ActionBarActivity {
         fields.put("lastName", mLastName.getText().toString().trim());
         fields.put("homeCity", mHomeCity.getText().toString().trim());
         fields.put("phone", mPhone.getText().toString().trim());
-        fields.put("driving", isDriver);
-        fields.put("car", mCar.getText().toString().trim());
         fields.put("arriveHQBy", mArriveHQBy.getText().toString().trim());
         fields.put("arriveHomeBy", mArriveHomeBy.getText().toString().trim());
 
@@ -290,5 +203,16 @@ public class SettingsActivity extends ActionBarActivity {
 
     // Validate user inputs
     private void validateFields(HashMap<String, Object> fields) {
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        hideSoftKeyboard(SettingsActivity.this);
+        return false;
+    }
+
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager = (InputMethodManager)  activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
     }
 }

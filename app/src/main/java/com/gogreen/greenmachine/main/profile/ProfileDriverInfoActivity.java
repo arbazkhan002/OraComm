@@ -1,19 +1,22 @@
 package com.gogreen.greenmachine.main.profile;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Switch;
-import android.widget.CompoundButton;
 
 import com.gogreen.greenmachine.R;
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
@@ -104,5 +107,16 @@ public class ProfileDriverInfoActivity extends ActionBarActivity {
         privProfile.setDriverStatus(driverStatus);
         privProfile.setDriverCar(car);
         privProfile.saveInBackground();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        hideSoftKeyboard(ProfileDriverInfoActivity.this);
+        return false;
+    }
+
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager = (InputMethodManager)  activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
     }
 }

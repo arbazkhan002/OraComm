@@ -1,5 +1,6 @@
 package com.gogreen.greenmachine.main.match;
 
+import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,7 +8,9 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -16,6 +19,7 @@ import android.widget.TimePicker;
 
 import com.gc.materialdesign.views.ButtonRectangle;
 import com.gogreen.greenmachine.R;
+import com.gogreen.greenmachine.main.login.LoginActivity;
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
 import com.parse.ParseException;
 import com.parse.ParseUser;
@@ -214,5 +218,16 @@ public class DrivingActivity extends ActionBarActivity {
         intent.putExtra("destination", mDestSpinner.getSelectedItem().toString());
         intent.putExtra("driverCar", driverCarEditText.getText().toString());
         startActivity(intent);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        hideSoftKeyboard(DrivingActivity.this);
+        return false;
+    }
+
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager = (InputMethodManager)  activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
     }
 }

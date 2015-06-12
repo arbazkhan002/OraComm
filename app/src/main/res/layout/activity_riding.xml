@@ -1,12 +1,11 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".om.gogreen.greenmachine.main.match.RidingActivity" >
+    tools:context="com.gogreen.greenmachine.main.match.RidingActivity" >
 
 
     <TableLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_height="match_parent">
 
         <include
             android:id="@+id/tool_bar"
@@ -15,103 +14,109 @@
         <TableRow
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:paddingRight="30px"
-            android:paddingLeft="30px"
-            android:layout_marginTop="50px">
+            android:paddingRight="15dp"
+            android:paddingLeft="15dp"
+            android:layout_marginTop="25dp">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="@string/match_info_start"
                 android:id="@+id/driver_match_start"
+                android:layout_weight=".3"
                 android:textAppearance="?android:attr/textAppearanceLarge"/>
 
             <Spinner
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:id="@+id/start_spinner"
-                android:paddingLeft="15px"
-                />
+                android:layout_weight=".7"/>
         </TableRow>
 
         <TableRow
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:paddingRight="30px"
-            android:paddingLeft="30px">
+            android:paddingRight="15dp"
+            android:paddingLeft="15dp">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="@string/match_info_by"
                 android:id="@+id/driver_match_by_start"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:layout_marginLeft="50px"/>
+                android:layout_marginLeft="25dp"
+                android:layout_weight=".3"/>
 
             <EditText
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:inputType="time"
                 android:ems="10"
                 android:text="@string/default_match_by"
+                android:windowSoftInputMode="stateHidden"
+                android:focusable="false"
                 android:id="@+id/match_by_edit_text"
-                android:paddingLeft="15px"
-                />
+                android:layout_weight=".7" />
         </TableRow>
 
         <TableRow
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:layout_marginTop="50px"
-            android:paddingRight="30px"
-            android:paddingLeft="30px">
+            android:layout_marginTop="25dp"
+            android:paddingRight="15dp"
+            android:paddingLeft="15dp">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="@string/match_info_end"
                 android:id="@+id/driver_match_end"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:paddingRight="15px"/>
+                android:paddingRight="10dp"
+                android:layout_weight=".3"/>
 
             <Spinner
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:id="@+id/destination_spinner"
-                android:paddingLeft="15px"/>
+                android:layout_weight=".7"/>
         </TableRow>
 
         <TableRow
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:paddingRight="30px"
-            android:paddingLeft="30px">
+            android:paddingRight="15dp"
+            android:paddingLeft="15dp">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="@string/match_info_by"
                 android:id="@+id/driver_match_by_end"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:layout_marginLeft="50px"/>
-
+                android:layout_marginLeft="25dp"
+                android:layout_weight=".3"/>
 
             <EditText
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:inputType="time"
                 android:ems="10"
                 android:text="@string/default_arrive_by"
                 android:id="@+id/arrive_by_edit_text"
-                android:paddingLeft="15px"/>
+                android:windowSoftInputMode="stateHidden"
+                android:focusable="false"
+                android:layout_weight=".7"/>
         </TableRow>
     </TableLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="30px"
+        android:padding="15dp"
         android:id="@+id/rl">
+
         <com.gc.materialdesign.views.ButtonRectangle
             android:id="@+id/rider_match_button"
             android:layout_width="wrap_content"
@@ -120,6 +125,6 @@
             android:text="@string/match_button_text"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true"
-            android:padding="50px" />
+            android:padding="25dp" />
     </RelativeLayout>
 </merge>

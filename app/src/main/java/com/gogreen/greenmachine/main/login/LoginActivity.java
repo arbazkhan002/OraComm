@@ -1,13 +1,16 @@
 package com.gogreen.greenmachine.main.login;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -45,8 +48,7 @@ public class LoginActivity extends ActionBarActivity {
         passwordEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == R.id.edittext_action_login ||
-                        actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
+                if (actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
                     login();
                     return true;
                 }
@@ -85,7 +87,7 @@ public class LoginActivity extends ActionBarActivity {
 
         // If there is a validation error, display the error
         if (validationError) {
-            Toast.makeText(LoginActivity.this, validationErrorMessage.toString(), Toast.LENGTH_LONG)
+            Toast.makeText(LoginActivity.this, validationErrorMessage.toString(), Toast.LENGTH_SHORT)
                     .show();
             return;
         }
@@ -101,15 +103,25 @@ public class LoginActivity extends ActionBarActivity {
                 dialog.dismiss();
                 if (e != null) {
                     // Show the error message
-                    Toast.makeText(LoginActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(LoginActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                 } else {
                     // Start an intent for the dispatch activity
                     Intent intent = new Intent(LoginActivity.this, DispatchActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
-                    finish();
                 }
             }
         });
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        hideSoftKeyboard(LoginActivity.this);
+        return false;
+    }
+
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager = (InputMethodManager)  activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
     }
 }

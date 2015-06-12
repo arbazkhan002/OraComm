@@ -1,13 +1,16 @@
 package com.gogreen.greenmachine.main.login;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,8 +55,7 @@ public class SignUpActivity extends ActionBarActivity {
         passwordAgainEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == R.integer.action_signup ||
-                        actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
+                if (actionId == EditorInfo.IME_ACTION_UNSPECIFIED) {
                     signup();
                     return true;
                 }
@@ -70,12 +72,25 @@ public class SignUpActivity extends ActionBarActivity {
         });
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        hideSoftKeyboard(SignUpActivity.this);
+        return false;
+    }
+
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager = (InputMethodManager)  activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+    }
+
     private void signup() {
         String username = usernameEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
         String passwordAgain = passwordAgainEditText.getText().toString().trim();
 
-        validateUserInput(username, password, passwordAgain);
+        if (containsInvalidInput(username, password, passwordAgain)) {
+            return;
+        }
 
         // Set up a progress dialog
         final ProgressDialog dialog = new ProgressDialog(SignUpActivity.this);
@@ -93,10 +108,10 @@ public class SignUpActivity extends ActionBarActivity {
         user.signUpInBackground(new SignUpCallback() {
             @Override
             public void done(ParseException e) {
-
+                dialog.dismiss();
                 if (e != null) {
                     // Show the error message
-                    Toast.makeText(SignUpActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(SignUpActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                 } else {
                     // Start an intent for the dispatch activity
                     ParseUser curUser = ParseUser.getCurrentUser();
@@ -121,7 +136,7 @@ public class SignUpActivity extends ActionBarActivity {
                     } catch (ParseException error) {
 
                     }
-                    dialog.dismiss();
+
                     Intent intent = new Intent(SignUpActivity.this, DispatchActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
@@ -130,15 +145,11 @@ public class SignUpActivity extends ActionBarActivity {
         });
     }
 
-    private void validateUserInput(String username, String password, String passwordAgain) {
+    private boolean containsInvalidInput(String username, String password, String passwordAgain) {
         // Validate the sign up data
         boolean validationError = false;
         StringBuilder validationErrorMessage = new StringBuilder(getString(R.string.error_intro));
-        if (username.length() == 0) {
-            validationError = true;
-            validationErrorMessage.append(getString(R.string.error_blank_username));
-        }
-        if (!username.contains("@")) {
+        if (!username.contains("@") || username.length() == 0) {
             validationError = true;
             validationErrorMessage.append(getString(R.string.error_invalid_email));
         }
@@ -160,9 +171,9 @@ public class SignUpActivity extends ActionBarActivity {
 
         // If there is a validation error, display the error
         if (validationError) {
-            Toast.makeText(SignUpActivity.this, validationErrorMessage.toString(), Toast.LENGTH_LONG)
+            Toast.makeText(SignUpActivity.this, validationErrorMessage.toString(), Toast.LENGTH_SHORT)
                     .show();
-            return;
         }
+        return validationError;
     }
 }

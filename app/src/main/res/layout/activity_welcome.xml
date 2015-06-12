@@ -81,12 +81,6 @@
 
     </LinearLayout>
 
-    <com.google.android.gms.common.SignInButton
-        android:id="@+id/signgoogle_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/signgoogle" />
-
     <RelativeLayout
         android:layout_height="wrap_content"
         android:layout_width="fill_parent">
