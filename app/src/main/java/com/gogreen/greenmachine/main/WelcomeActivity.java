@@ -214,11 +214,9 @@ public class WelcomeActivity extends ActionBarActivity {
                 public void done(ParseUser user, ParseException e) {
                     if (e != null) {
                         // Show the error message
-                        Log.i(WelcomeActivity.class.getSimpleName(), "Attempting Done failed.");
                         Toast.makeText(WelcomeActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
                     } else {
                         // Start an intent for the dispatch activity
-                        Log.i(WelcomeActivity.class.getSimpleName(), "Attempting Done passed.");
                         Intent intent = new Intent(WelcomeActivity.this, DispatchActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
@@ -237,12 +235,12 @@ public class WelcomeActivity extends ActionBarActivity {
         protected Object doInBackground(Object[] params) {
             try {
                 final String token = fetchToken();
-                final HttpTransport HTTP_TRANSPORT = AndroidHttp.newCompatibleTransport();
-                final JsonFactory JSON_FACTORY = new JacksonFactory();
-                HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
+                final HttpTransport HTTPTRANSPORT = AndroidHttp.newCompatibleTransport();
+                final JsonFactory JSONFACTORY = new JacksonFactory();
+                HttpRequestFactory requestFactory = HTTPTRANSPORT.createRequestFactory(new HttpRequestInitializer() {
                     @Override
                     public void initialize(HttpRequest request) {
-                        request.setParser(new JsonObjectParser(JSON_FACTORY));
+                        request.setParser(new JsonObjectParser(JSONFACTORY));
                     }
                 });
                 String urlStr = "https://www.googleapis.com/oauth2/v1/userinfo";

@@ -89,7 +89,6 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
         url.put("mode", mode);
         url.put("language", language);
         url.put("key", key);
-        Log.i(DriverMatchedActivity.class.getSimpleName(), url+" "+url);
         new RetrieveDistanceMatrix().execute(url);
 
         // Initialize rider textview
