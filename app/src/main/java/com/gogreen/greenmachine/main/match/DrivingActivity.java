@@ -16,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import com.gc.materialdesign.views.ButtonRectangle;
 import com.gogreen.greenmachine.R;
@@ -23,7 +24,9 @@ import com.gogreen.greenmachine.parseobjects.PrivateProfile;
 import com.parse.ParseException;
 import com.parse.ParseUser;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 
 public class DrivingActivity extends ActionBarActivity {
@@ -179,7 +182,18 @@ public class DrivingActivity extends ActionBarActivity {
         ButtonRectangle nextButton = (ButtonRectangle) findViewById(R.id.driver_match_button);
         nextButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                startNextActivity();
+                String matchBy = matchByEditText.getText().toString();
+                String arriveBy = arriveByEditText.getText().toString();
+                Date matchDate = convertToDateObject(matchBy);
+                Date arriveDate = convertToDateObject(arriveBy);
+                Date d = new Date();
+                if (d.compareTo(matchDate) < 0 && matchDate.compareTo(arriveDate) < 0) {
+                    startNextActivity();
+                }
+                else {
+                    Toast.makeText(getApplicationContext(),"Please choose to drive later than the current time.", Toast.LENGTH_SHORT).show();
+                }
+
             }
         });
     }
@@ -217,6 +231,22 @@ public class DrivingActivity extends ActionBarActivity {
         intent.putExtra("destination", mDestSpinner.getSelectedItem().toString());
         intent.putExtra("driverCar", driverCarEditText.getText().toString());
         startActivity(intent);
+    }
+
+
+    private Date convertToDateObject(String s) {
+        SimpleDateFormat ft = new SimpleDateFormat ("yyyy-MM-dd h:m a");
+        Calendar cal = Calendar.getInstance();
+        String input = cal.get(Calendar.YEAR)+"-"+(cal.get(Calendar.MONTH)+1)+"-"+cal.get(Calendar.DATE)+" " +s;
+
+        Date t = new Date();
+
+        try {
+            t = ft.parse(input);
+        } catch (java.text.ParseException e) {
+            e.printStackTrace();
+        }
+        return t;
     }
 
     @Override

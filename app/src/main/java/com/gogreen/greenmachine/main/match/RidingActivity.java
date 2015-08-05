@@ -16,11 +16,14 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import com.gc.materialdesign.views.ButtonRectangle;
 import com.gogreen.greenmachine.R;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 public class RidingActivity extends ActionBarActivity {
     private Spinner mStartSpinner;
@@ -165,7 +168,17 @@ public class RidingActivity extends ActionBarActivity {
         ButtonRectangle matchButton = (ButtonRectangle) findViewById(R.id.rider_match_button);
         matchButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                startNextActivity();
+                String matchBy = matchByEditText.getText().toString();
+                String arriveBy = arriveByEditText.getText().toString();
+                Date matchDate = convertToDateObject(matchBy);
+                Date arriveDate = convertToDateObject(arriveBy);
+                Date d = new Date();
+                if (d.compareTo(matchDate) < 0 && matchDate.compareTo(arriveDate) < 0) {
+                    startNextActivity();
+                }
+                else {
+                    Toast.makeText(getApplicationContext(), "Incorrect time found. Did you choose to drive later than the current time?", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -195,6 +208,22 @@ public class RidingActivity extends ActionBarActivity {
     public boolean onTouchEvent(MotionEvent event) {
         hideSoftKeyboard(RidingActivity.this);
         return false;
+    }
+
+
+    private Date convertToDateObject(String s) {
+        SimpleDateFormat ft = new SimpleDateFormat ("yyyy-MM-dd h:m a");
+        Calendar cal = Calendar.getInstance();
+        String input = cal.get(Calendar.YEAR)+"-"+(cal.get(Calendar.MONTH)+1)+"-"+cal.get(Calendar.DATE)+" " +s;
+
+        Date t = new Date();
+
+        try {
+            t = ft.parse(input);
+        } catch (java.text.ParseException e) {
+            e.printStackTrace();
+        }
+        return t;
     }
 
     public static void hideSoftKeyboard(Activity activity) {
