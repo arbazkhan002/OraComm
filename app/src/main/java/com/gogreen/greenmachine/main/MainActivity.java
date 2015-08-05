@@ -37,6 +37,7 @@ import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
 import com.gogreen.greenmachine.parseobjects.PublicProfile;
+import com.gogreen.greenmachine.util.Tuple;
 import com.gogreen.greenmachine.util.Utils;
 import com.gogreen.greenmachine.util.Tuple;
 import com.google.android.gms.common.ConnectionResult;
@@ -311,20 +312,9 @@ public class MainActivity extends ActionBarActivity implements
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        stopLocationUpdates();
-    }
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
-            startLocationUpdates();
-        }
-    }
-    @Override
     protected void onStop() {
         super.onStop();
+        stopLocationUpdates();
         mGoogleApiClient.disconnect();
     }
 
@@ -376,7 +366,7 @@ public class MainActivity extends ActionBarActivity implements
     }
 
     private void updateLocation() {
-        if (mCurrentLocation!=null){
+        if (mCurrentLocation != null){
             mLatitude = mCurrentLocation.getLatitude();
             mLongitude = mCurrentLocation.getLongitude();
 
@@ -748,3 +738,4 @@ public class MainActivity extends ActionBarActivity implements
         }
     }
 }
+

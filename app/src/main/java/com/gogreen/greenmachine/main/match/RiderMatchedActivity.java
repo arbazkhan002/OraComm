@@ -8,10 +8,12 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.gogreen.greenmachine.R;
+import com.gogreen.greenmachine.main.MainActivity;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
 import com.gogreen.greenmachine.parseobjects.PublicProfile;
@@ -49,6 +51,9 @@ public class RiderMatchedActivity extends ActionBarActivity implements OnMapRead
     private TextView mDriverPhoneTextView;
     private TextView mDriverName;
     private TextView mDriverCar;
+    private Button mRideComplete;
+
+    private MatchRoute mRoute;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +80,18 @@ public class RiderMatchedActivity extends ActionBarActivity implements OnMapRead
 
         mDriverCar = (TextView) findViewById(R.id.driver_car_text);
         mDriverCar.setText(this.driverCar);
+
+        mRideComplete = (Button) findViewById(R.id.button_ride_complete);
+        mRideComplete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mRoute.setStatus(MatchRoute.TripStatus.COMPLETED);
+                mRoute.saveInBackground();
+                Intent intent = new Intent(RiderMatchedActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        });
 
         ImageView callButton = (ImageView) findViewById(R.id.call);
         callButton.setOnClickListener(new View.OnClickListener() {
@@ -104,6 +121,8 @@ public class RiderMatchedActivity extends ActionBarActivity implements OnMapRead
 
     private void getInfo() {
         ParseUser currentUser = ParseUser.getCurrentUser();
+        PublicProfile curUserPublicProfile = (PublicProfile) currentUser.get("publicProfile");
+        Utils.getInstance().fetchParseObject(curUserPublicProfile);
         List<MatchRoute> matchRoutes = new ArrayList<MatchRoute>();
         boolean foundRoute = false;
 
@@ -127,18 +146,26 @@ public class RiderMatchedActivity extends ActionBarActivity implements OnMapRead
                 // handle later since low on time
             }
 
-            PublicProfile driverProfile = (PublicProfile) driver.get("publicProfile");
-            Utils.getInstance().fetchParseObject(driverProfile);
+            ArrayList<PublicProfile> riders = route.getRiders();
+            Iterator ridersIter = riders.iterator();
+            while (ridersIter.hasNext()) {
+                PublicProfile riderProfile = (PublicProfile) ridersIter.next();
+                if (riderProfile.getObjectId().equals(curUserPublicProfile.getObjectId())) {
+                    PublicProfile driverProfile = (PublicProfile) driver.get("publicProfile");
+                    Utils.getInstance().fetchParseObject(driverProfile);
 
-            Hotspot hotspot = route.getHotspot();
-            Utils.getInstance().fetchParseObject(hotspot);
+                    Hotspot hotspot = route.getHotspot();
+                    Utils.getInstance().fetchParseObject(hotspot);
 
-            this.hotspotLocation = hotspot.getParseGeoPoint();
-            this.driverLocation = driverProfile.getLastKnownLocation();
-            this.driverPhone = driverProfile.getPhoneNumber();
-            this.driverName = driverProfile.getFirstName();
-            this.driverCar = route.getCar();
-            foundRoute = true;
+                    this.hotspotLocation = hotspot.getParseGeoPoint();
+                    this.driverLocation = driverProfile.getLastKnownLocation();
+                    this.driverPhone = driverProfile.getPhoneNumber();
+                    this.driverName = driverProfile.getFirstName();
+                    this.driverCar = route.getCar();
+                    this.mRoute = route;
+                    foundRoute = true;
+                }
+            }
         }
     }
 

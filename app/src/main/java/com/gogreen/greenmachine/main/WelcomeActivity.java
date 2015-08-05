@@ -12,7 +12,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,9 +30,16 @@ import com.google.android.gms.auth.GooglePlayServicesAvailabilityException;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.SignInButton;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonObjectParser;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson.JacksonFactory;
 import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
@@ -238,11 +244,11 @@ public class WelcomeActivity extends ActionBarActivity {
                 final HttpTransport HTTPTRANSPORT = AndroidHttp.newCompatibleTransport();
                 final JsonFactory JSONFACTORY = new JacksonFactory();
                 HttpRequestFactory requestFactory = HTTPTRANSPORT.createRequestFactory(new HttpRequestInitializer() {
-                    @Override
-                    public void initialize(HttpRequest request) {
-                        request.setParser(new JsonObjectParser(JSONFACTORY));
-                    }
-                });
+                                                                                           @Override
+                                                                                           public void initialize(HttpRequest request) {
+                                                                                               request.setParser(new JsonObjectParser(JSONFACTORY));
+                                                                                           }
+                                                                                       });
                 String urlStr = "https://www.googleapis.com/oauth2/v1/userinfo";
                 GenericUrl url = new GenericUrl(urlStr);
                 url.put("access_token", token);
@@ -303,6 +309,7 @@ public class WelcomeActivity extends ActionBarActivity {
                                 }
                             }
                         });
+
                     }
                     else {
                         //Closes the connection.
@@ -310,11 +317,9 @@ public class WelcomeActivity extends ActionBarActivity {
                         response.disconnect();
                         throw new IOException(msg);
                     }
-
                 } finally {
                     response.disconnect();
                 }
-                //Preferences.saveString(Constants.KEY_BLOGGER_TOKEN, token);
             } catch (IOException e) {
                 // The fetchToken() method handles Google-specific exceptions,
                 // so this indicates something went wrong at a higher level.
@@ -326,7 +331,7 @@ public class WelcomeActivity extends ActionBarActivity {
             return null;
         }
 
-        // convert InputStream to String
+        // Convert InputStream to String
         private String getStringFromInputStream(InputStream is) {
 
             BufferedReader br = null;
@@ -334,12 +339,10 @@ public class WelcomeActivity extends ActionBarActivity {
 
             String line;
             try {
-
                 br = new BufferedReader(new InputStreamReader(is));
                 while ((line = br.readLine()) != null) {
                     sb.append(line);
                 }
-
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
@@ -353,7 +356,6 @@ public class WelcomeActivity extends ActionBarActivity {
             }
 
             return sb.toString();
-
         }
 
 

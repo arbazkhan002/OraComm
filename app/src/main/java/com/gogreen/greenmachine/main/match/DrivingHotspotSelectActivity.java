@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.View;
@@ -42,14 +42,20 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
-public class DrivingHotspotSelectActivity extends ActionBarActivity implements
+public class DrivingHotspotSelectActivity extends AppCompatActivity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener,
         OnMapReadyCallback,
         GoogleMap.OnMarkerClickListener {
+
+    private final static String REQUESTING_LOCATION_UPDATES_KEY = "requesting-location-updates-key";
+    private final static String LAST_UPDATED_TIME_STRING_KEY = "last-updated-time-string-key";
+    private final static String LOCATION_KEY = "location-key";
+    private final static String HOTSPOTS_KEY = "hotspots";
 
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
@@ -59,9 +65,6 @@ public class DrivingHotspotSelectActivity extends ActionBarActivity implements
     private boolean mRequestingLocationUpdates;
     private LocationRequest mLocationRequest;
 
-    private final static String REQUESTING_LOCATION_UPDATES_KEY = "requesting-location-updates-key";
-    private final static String LAST_UPDATED_TIME_STRING_KEY = "last-updated-time-string-key";
-    private final static String LOCATION_KEY = "location-key";
     private String mLastUpdateTime;
     private GoogleMap mMap;
 
@@ -131,15 +134,20 @@ public class DrivingHotspotSelectActivity extends ActionBarActivity implements
 
     @Override
     public void onConnected(Bundle connectionHint) {
+        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
+            startLocationUpdates();
+        }
+
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
+
         if (mLastLocation != null) {
             mLatitude = (mLastLocation.getLatitude());
             mLongitude = (mLastLocation.getLongitude());
-        }
-        else {
+        } else {
             Toast.makeText(getApplicationContext(),"Please turn on location.", Toast.LENGTH_SHORT).show();
         }
+
         if (mRequestingLocationUpdates) {
             startLocationUpdates();
         }
@@ -169,35 +177,26 @@ public class DrivingHotspotSelectActivity extends ActionBarActivity implements
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        stopLocationUpdates();
-    }
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
-            startLocationUpdates();
-        }
-    }
-    @Override
     protected void onStop() {
         super.onStop();
+        stopLocationUpdates();
         mGoogleApiClient.disconnect();
     }
 
     private void updateLocation() {
-        mLatitude = mCurrentLocation.getLatitude();
-        mLongitude = mCurrentLocation.getLongitude();
+        if (mCurrentLocation != null) {
+            mLatitude = mCurrentLocation.getLatitude();
+            mLongitude = mCurrentLocation.getLongitude();
 
-        // Fetch user's public profile
-        ParseUser currentUser = ParseUser.getCurrentUser();
-        PublicProfile pubProfile = (PublicProfile) currentUser.get("publicProfile");
-        Utils.getInstance().fetchParseObject(pubProfile);
+            // Fetch user's public profile
+            ParseUser currentUser = ParseUser.getCurrentUser();
+            PublicProfile pubProfile = (PublicProfile) currentUser.get("publicProfile");
+            Utils.getInstance().fetchParseObject(pubProfile);
 
-        // Insert coordinates into the user's public profile lastKnownLocation
-        ParseGeoPoint userLoc = new ParseGeoPoint(mLatitude, mLongitude);
-        pubProfile.setLastKnownLocation(userLoc);
+            // Insert coordinates into the user's public profile lastKnownLocation
+            ParseGeoPoint userLoc = new ParseGeoPoint(mLatitude, mLongitude);
+            pubProfile.setLastKnownLocation(userLoc);
+        }
     }
 
     protected void createLocationRequest() {
@@ -218,9 +217,21 @@ public class DrivingHotspotSelectActivity extends ActionBarActivity implements
     }
 
     public void onSaveInstanceState(Bundle savedInstanceState) {
+
         savedInstanceState.putBoolean(REQUESTING_LOCATION_UPDATES_KEY,
                 mRequestingLocationUpdates);
+
         savedInstanceState.putParcelable(LOCATION_KEY, mCurrentLocation);
+
+        // Save selected hotspots
+        Iterator selectedHspotsIter = this.selectedHotspots.iterator();
+        List<String> hSpotIds = new ArrayList<>();
+        while (selectedHspotsIter.hasNext()) {
+            Hotspot h = (Hotspot) selectedHspotsIter.next();
+            hSpotIds.add(h.getObjectId());
+        }
+        savedInstanceState.putStringArrayList(HOTSPOTS_KEY, (ArrayList) hSpotIds);
+
         super.onSaveInstanceState(savedInstanceState);
     }
 
@@ -238,6 +249,20 @@ public class DrivingHotspotSelectActivity extends ActionBarActivity implements
             if (savedInstanceState.keySet().contains(LAST_UPDATED_TIME_STRING_KEY)) {
                 mLastUpdateTime = savedInstanceState.getString(LAST_UPDATED_TIME_STRING_KEY);
             }
+
+            if (savedInstanceState.keySet().contains(HOTSPOTS_KEY)) {
+                List<String> selectedHspotList = savedInstanceState.getStringArrayList(HOTSPOTS_KEY);
+                Set<String> selectedHspotStrings = new HashSet<>(selectedHspotList);
+
+                Iterator serverHotspotIter = this.serverHotspots.iterator();
+                while (serverHotspotIter.hasNext()) {
+                    Hotspot h = (Hotspot) serverHotspotIter.next();
+                    if (selectedHspotStrings.contains(h.getObjectId())) {
+                        // Set the opacity of the marker if it is actually a marker on the map
+                        this.selectedHotspots.add(h);
+                    }
+                }
+            }
             updateLocation();
         }
     }
@@ -253,13 +278,14 @@ public class DrivingHotspotSelectActivity extends ActionBarActivity implements
 
     @Override
     public void onMapReady(GoogleMap map) {
+
         mMap = map;
 
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(new LatLng(mLatitude, mLongitude))      // Sets the center of the map
                 .zoom(10)
                 .build();                   // Creates a CameraPosition from the builder
-        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        map.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
         if (this.serverHotspots != null) {
             Iterator iter = this.serverHotspots.iterator();
@@ -267,21 +293,25 @@ public class DrivingHotspotSelectActivity extends ActionBarActivity implements
                 Hotspot h = (Hotspot) iter.next();
                 ParseGeoPoint parsePoint = h.getParseGeoPoint();
                 LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
-                mMap.addMarker(new MarkerOptions().position(hotspotLoc)
-                                .icon(BitmapDescriptorFactory.defaultMarker(30))
-                                .title(h.getName())
-                                .alpha(0.75f)
-                );
-                mMap.setOnMarkerClickListener((GoogleMap.OnMarkerClickListener)this);
+                MarkerOptions markerOptions = new MarkerOptions().position(hotspotLoc)
+                        .icon(BitmapDescriptorFactory.defaultMarker(30))
+                        .title(h.getName())
+                        .alpha(0.75f);
+                Marker marker = map.addMarker(markerOptions);
+                map.setOnMarkerClickListener((GoogleMap.OnMarkerClickListener) this);
+
+                if (this.selectedHotspots.contains(h)) {
+                    setMarker(marker);
+                }
             }
         } else {
             // Handle the server not getting hotspots
         }
-        mMap.setMyLocationEnabled(true);
+        map.setMyLocationEnabled(true);
     }
 
     @Override
-    public boolean onMarkerClick(Marker m){
+    public boolean onMarkerClick(Marker m) {
         if (m.getAlpha() == 0.75f) {
             setMarker(m);
         }
@@ -308,8 +338,6 @@ public class DrivingHotspotSelectActivity extends ActionBarActivity implements
                 break;
             }
         }
-
-
     }
 
     private boolean isEqualParseGeoPoint(ParseGeoPoint p1, ParseGeoPoint p2) {
@@ -443,6 +471,8 @@ public class DrivingHotspotSelectActivity extends ActionBarActivity implements
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
+            matchRoute.setStatus(MatchRoute.TripStatus.CANCELED);
+            matchRoute.saveInBackground();
             pdLoading.dismiss();
             processResult();
         }

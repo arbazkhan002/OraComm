@@ -19,6 +19,7 @@ import android.widget.Spinner;
 import android.widget.Switch;
 
 import com.gogreen.greenmachine.R;
+import com.gogreen.greenmachine.main.login.DispatchActivity;
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
 import com.parse.ParseUser;
 
@@ -93,9 +94,17 @@ public class ProfileDriverInfoActivity extends ActionBarActivity {
         String car = carEditText.getText().toString().trim();
 
         savePrivateProfile(driving, car);
+        setUserProfileComplete(currentUser);
 
-        Intent intent = new Intent(ProfileDriverInfoActivity.this, ProfileArriveByInfoActivity.class);
+        Intent intent = new Intent(ProfileDriverInfoActivity.this, DispatchActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
+        finish();
+    }
+
+    private void setUserProfileComplete(ParseUser user) {
+        user.put("profileComplete", true);
+        user.saveInBackground();
     }
 
     private void savePrivateProfile(String driving, String car) {
@@ -117,6 +126,8 @@ public class ProfileDriverInfoActivity extends ActionBarActivity {
 
     public static void hideSoftKeyboard(Activity activity) {
         InputMethodManager inputMethodManager = (InputMethodManager)  activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
-    }
+        View v = activity.getCurrentFocus();
+        if (v != null) {
+            inputMethodManager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+        }    }
 }

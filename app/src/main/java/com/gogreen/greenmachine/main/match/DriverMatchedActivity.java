@@ -5,15 +5,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.gogreen.greenmachine.R;
 import com.gogreen.greenmachine.distmatrix.RetrieveDistanceMatrix;
+import com.gogreen.greenmachine.main.MainActivity;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
 import com.gogreen.greenmachine.parseobjects.PublicProfile;
@@ -56,6 +57,9 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
     private TextView mRiderText;
     private TextView mRiderPhoneTextView;
     private String riderNumber;
+    private Button mRideComplete;
+
+    private MatchRoute mRoute;
 
     static final HttpTransport HTTP_TRANSPORT = AndroidHttp.newCompatibleTransport();
     static final JsonFactory JSON_FACTORY = new JacksonFactory();
@@ -105,6 +109,18 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
         mRiderPhoneTextView = (TextView) findViewById(R.id.rider_phone_text);
         mRiderPhoneTextView.setText(riderNumber);
 
+        mRideComplete = (Button) findViewById(R.id.button_ride_complete);
+        mRideComplete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mRoute.setStatus(MatchRoute.TripStatus.COMPLETED);
+                mRoute.saveInBackground();
+                Intent intent = new Intent(DriverMatchedActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+        });
+
         ImageView callButton = (ImageView) findViewById(R.id.call);
         callButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -148,24 +164,27 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
             MatchRoute route = (MatchRoute) routeIterator.next();
             Utils.getInstance().fetchParseObject(route);
 
-            ArrayList<PublicProfile> riders = route.getRiders();
-            Iterator ridersIter = riders.iterator();
-            while (ridersIter.hasNext()) {
-                PublicProfile riderProfile = (PublicProfile) ridersIter.next();
-                Utils.getInstance().fetchParseObject(riderProfile);
+            if (route.getDriver().getObjectId().equals(currentUser.getObjectId())) {
+                ArrayList<PublicProfile> riders = route.getRiders();
+                Iterator ridersIter = riders.iterator();
+                while (ridersIter.hasNext()) {
+                    PublicProfile riderProfile = (PublicProfile) ridersIter.next();
+                    Utils.getInstance().fetchParseObject(riderProfile);
 
-                this.mRiderText.setText(riderProfile.getFirstName());
+                    this.mRiderText.setText(riderProfile.getFirstName());
 
-                ParseGeoPoint riderLocation = riderProfile.getLastKnownLocation();
-                this.riderLocations.add(riderLocation);
-                this.riderNumber = riderProfile.getPhoneNumber();
+                    ParseGeoPoint riderLocation = riderProfile.getLastKnownLocation();
+                    this.riderLocations.add(riderLocation);
+                    this.riderNumber = riderProfile.getPhoneNumber();
+                }
+
+                Hotspot hotspot = route.getHotspot();
+                Utils.getInstance().fetchParseObject(hotspot);
+
+                this.hotspotLocation = hotspot.getParseGeoPoint();
+                this.mRoute = route;
+                foundRoute = true;
             }
-
-            Hotspot hotspot = route.getHotspot();
-            Utils.getInstance().fetchParseObject(hotspot);
-
-            this.hotspotLocation = hotspot.getParseGeoPoint();
-            foundRoute = true;
         }
     }
 

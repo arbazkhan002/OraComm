@@ -10,9 +10,14 @@
         if there is a match by</string>
     <string name="matched">You\'ve been matched!</string>
 
+    <string name="ride_complete">Ride Complete</string>
+
     <string name="default_car">2014 Blue Toyota Camry</string>
     <string name="default_match_by">8:30 AM</string>
     <string name="default_arrive_by">9:00 AM</string>
+
+    <string name="temp_name_rider">Jane Doe</string>
+    <string name="temp_name_driver">Theresa Lee</string>
 
     <string name="progress_no_rider_found">Looks like there aren\'t any riders. Try again in a
          a couple minutes!</string>

@@ -7,7 +7,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Toast;
@@ -55,6 +54,11 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
         OnMapReadyCallback,
         GoogleMap.OnMarkerClickListener {
 
+    private final static String REQUESTING_LOCATION_UPDATES_KEY = "requesting-location-updates-key";
+    private final static String LAST_UPDATED_TIME_STRING_KEY = "last-updated-time-string-key";
+    private final static String LOCATION_KEY = "location-key";
+    private final static String HOTSPOTS_KEY = "hotspots";
+
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
     private Location mCurrentLocation;
@@ -62,9 +66,6 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
     private double mLongitude;
     private boolean mRequestingLocationUpdates;
     private LocationRequest mLocationRequest;
-    private final static String REQUESTING_LOCATION_UPDATES_KEY = "requesting-location-updates-key";
-    private final static String LAST_UPDATED_TIME_STRING_KEY = "last-updated-time-string-key";
-    private final static String LOCATION_KEY = "location-key";
     private String mLastUpdateTime;
     private GoogleMap mMap;
 
@@ -76,7 +77,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
     private Set<Hotspot> selectedHotspots;
     private Date matchByDate;
     private Date arriveByDate;
-    private boolean riderMatched = false;
+    private boolean riderMatched;
     private MatchRoute.Destination destination;
 
     @Override
@@ -136,6 +137,10 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
 
     @Override
     public void onConnected(Bundle connectionHint) {
+        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
+            startLocationUpdates();
+        }
+
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
         if (mLastLocation != null) {
@@ -174,35 +179,26 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        stopLocationUpdates();
-    }
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
-            startLocationUpdates();
-        }
-    }
-    @Override
     protected void onStop() {
         super.onStop();
+        stopLocationUpdates();
         mGoogleApiClient.disconnect();
     }
 
     private void updateLocation() {
-        mLatitude = mCurrentLocation.getLatitude();
-        mLongitude = mCurrentLocation.getLongitude();
+        if (mCurrentLocation != null) {
+            mLatitude = mCurrentLocation.getLatitude();
+            mLongitude = mCurrentLocation.getLongitude();
 
-        // Fetch user's public profile
-        ParseUser currentUser = ParseUser.getCurrentUser();
-        PublicProfile pubProfile = (PublicProfile) currentUser.get("publicProfile");
-        Utils.getInstance().fetchParseObject(pubProfile);
+            // Fetch user's public profile
+            ParseUser currentUser = ParseUser.getCurrentUser();
+            PublicProfile pubProfile = (PublicProfile) currentUser.get("publicProfile");
+            Utils.getInstance().fetchParseObject(pubProfile);
 
-        // Insert coordinates into the user's public profile lastKnownLocation
-        ParseGeoPoint userLoc = new ParseGeoPoint(mLatitude, mLongitude);
-        pubProfile.setLastKnownLocation(userLoc);
+            // Insert coordinates into the user's public profile lastKnownLocation
+            ParseGeoPoint userLoc = new ParseGeoPoint(mLatitude, mLongitude);
+            pubProfile.setLastKnownLocation(userLoc);
+        }
     }
 
     protected void createLocationRequest() {
@@ -221,8 +217,19 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
     }
 
     public void onSaveInstanceState(Bundle savedInstanceState) {
+
         savedInstanceState.putBoolean(REQUESTING_LOCATION_UPDATES_KEY, mRequestingLocationUpdates);
+
         savedInstanceState.putParcelable(LOCATION_KEY, mCurrentLocation);
+
+        // Save selected hotspots
+        Iterator selectedHspotsIter = this.selectedHotspots.iterator();
+        List<String> hSpotIds = new ArrayList<>();
+        while (selectedHspotsIter.hasNext()) {
+            Hotspot h = (Hotspot) selectedHspotsIter.next();
+            hSpotIds.add(h.getObjectId());
+        }
+        savedInstanceState.putStringArrayList(HOTSPOTS_KEY, (ArrayList) hSpotIds);
         super.onSaveInstanceState(savedInstanceState);
     }
 
@@ -239,6 +246,20 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
 
             if (savedInstanceState.keySet().contains(LAST_UPDATED_TIME_STRING_KEY)) {
                 mLastUpdateTime = savedInstanceState.getString(LAST_UPDATED_TIME_STRING_KEY);
+            }
+
+            if (savedInstanceState.keySet().contains(HOTSPOTS_KEY)) {
+                List<String> selectedHspotList = savedInstanceState.getStringArrayList(HOTSPOTS_KEY);
+                Set<String> selectedHspotStrings = new HashSet<>(selectedHspotList);
+
+                Iterator serverHotspotIter = this.serverHotspots.iterator();
+                while (serverHotspotIter.hasNext()) {
+                    Hotspot h = (Hotspot) serverHotspotIter.next();
+                    if (selectedHspotStrings.contains(h.getObjectId())) {
+                        // Set the opacity of the marker if it is actually a marker on the map
+                        this.selectedHotspots.add(h);
+                    }
+                }
             }
             updateLocation();
         }
@@ -293,12 +314,16 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                 Hotspot h = (Hotspot) iter.next();
                 ParseGeoPoint parsePoint = h.getParseGeoPoint();
                 LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
-                mMap.addMarker(new MarkerOptions().position(hotspotLoc)
-                                .icon(BitmapDescriptorFactory.defaultMarker(30))
-                                .title(h.getName())
-                                .alpha(0.75f)
-                );
+                MarkerOptions markerOptions = new MarkerOptions().position(hotspotLoc)
+                        .icon(BitmapDescriptorFactory.defaultMarker(30))
+                        .title(h.getName())
+                        .alpha(0.75f);
+                Marker marker = mMap.addMarker(markerOptions);
                 mMap.setOnMarkerClickListener((GoogleMap.OnMarkerClickListener)this);
+
+                if (this.selectedHotspots.contains(h)) {
+                    setMarker(marker);
+                }
             }
         } else {
             // Handle the server not getting hotspots
@@ -387,7 +412,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
         }
     }
 
-    //Check if c1 is within c2's window of seconds
+    // Check if c1 is within c2's window of seconds
     private boolean isInTimeWindow(Calendar c1, Calendar c2, int seconds) {
         Calendar after = c2;
         after.add(Calendar.SECOND, seconds);
@@ -395,20 +420,19 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
 
         Calendar before = c2;
 
-        //since 'add' works by reference, subtract the time added above first
-        before.add(Calendar.SECOND, -2*seconds);
+        // since 'add' works by reference subtract the time added above first
+        before.add(Calendar.SECOND, -2 * seconds);
 
         Date lowTime = before.getTime();
         Date c1Time = c1.getTime();
 
-        //restore the calendar's time to original before returning control
+        // restore the calendar's time to original before returning control
         before.add(Calendar.SECOND, seconds);
         if ((c1Time.compareTo(highTime) <= 0) && (c1Time.compareTo(lowTime) >= 0)) {
             return true;
         }
 
         return false;
-
     }
 
     private boolean findDriver() {
@@ -439,16 +463,15 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
             // First check if the potential hotspots is empty. It is cleared if there was a prev. match
             int remainingCapacity = route.getCapacity();
 
-            Calendar route_cal = Calendar.getInstance();
-            Calendar my_cal = Calendar.getInstance();
-            route_cal.setTime(route.getArriveBy());
-            my_cal.setTime(this.arriveByDate);
+            Calendar routeCal = Calendar.getInstance();
+            Calendar myCal = Calendar.getInstance();
 
+            routeCal.setTime(route.getArriveBy());
+            myCal.setTime(this.arriveByDate);
 
-            //If the ride is in my time window, get a match
-            if (potentialHotspots.isEmpty() && remainingCapacity > 0 && isInTimeWindow(route_cal,my_cal,600)) {
+            if (potentialHotspots.isEmpty() && remainingCapacity > 0
+                    && isInTimeWindow(routeCal,myCal,600)) {
                 // Use the hotspot
-
                 Hotspot routeHotspot = route.getHotspot();
                 Utils.getInstance().fetchParseObject(routeHotspot);
 
@@ -481,7 +504,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                         }
                     }
                 }
-            } else if (remainingCapacity > 0 && isInTimeWindow(route_cal,my_cal,600)) {
+            } else if (remainingCapacity > 0  && isInTimeWindow(routeCal,myCal,600)) {
                 // Search for an intersection to initialize the hotspot and clear the online potentialHotspots list
                 Set<Hotspot> routesOnline = new HashSet<Hotspot>(potentialHotspots);
                 Set<Hotspot> intersection = new HashSet<Hotspot>(selectedHotspots);
@@ -554,6 +577,9 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
+            if (!riderMatched) {
+                riderRequest.saveInBackground();
+            }
             pdLoading.dismiss();
             processResult();
         }

@@ -47,4 +47,7 @@ build/
 
 api_keys.xml
 
+presentation/*
 *.pptx
+
+app/apk-*

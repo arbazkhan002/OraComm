@@ -12,4 +12,3 @@ public class Tuple<X, Y> {
         this.y = y;
     }
 }
-

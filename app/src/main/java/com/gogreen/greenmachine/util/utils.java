@@ -1,8 +1,5 @@
 package com.gogreen.greenmachine.util;
 
-import android.util.Log;
-
-import com.gogreen.greenmachine.main.match.RidingHotspotSelectActivity;
 import com.parse.ParseException;
 import com.parse.ParseObject;
 

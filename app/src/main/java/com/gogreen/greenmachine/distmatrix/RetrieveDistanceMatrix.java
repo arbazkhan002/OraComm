@@ -1,14 +1,13 @@
 package com.gogreen.greenmachine.distmatrix;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
@@ -39,7 +38,7 @@ public class RetrieveDistanceMatrix extends AsyncTask<GenericUrl,Result,Result> 
         }
         catch (IOException e){
             e.printStackTrace();
-            return (Result)null;
+            return null;
         }
     }
     @Override
