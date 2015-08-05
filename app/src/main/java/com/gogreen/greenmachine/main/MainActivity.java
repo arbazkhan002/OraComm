@@ -26,6 +26,7 @@ import com.gogreen.greenmachine.distmatrix.Element;
 import com.gogreen.greenmachine.distmatrix.Result;
 import com.gogreen.greenmachine.distmatrix.RetrieveDistanceMatrix;
 import com.gogreen.greenmachine.distmatrix.Row;
+import com.gogreen.greenmachine.interBack.InterBack;
 import com.gogreen.greenmachine.main.badges.BadgeActivity;
 import com.gogreen.greenmachine.main.login.DispatchActivity;
 import com.gogreen.greenmachine.main.match.DrivingActivity;
@@ -37,8 +38,6 @@ import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
 import com.gogreen.greenmachine.parseobjects.PublicProfile;
-import com.gogreen.greenmachine.util.Tuple;
-import com.gogreen.greenmachine.util.Utils;
 import com.gogreen.greenmachine.util.Tuple;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -116,6 +115,8 @@ public class MainActivity extends ActionBarActivity implements
     private int navDrawerProfileImage;
 
     private Set<Hotspot> serverHotspots;
+
+    private InterBack backend = new InterBack();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -332,9 +333,7 @@ public class MainActivity extends ActionBarActivity implements
             Iterator iter = this.serverHotspots.iterator();
             while (iter.hasNext()) {
                 Hotspot h = (Hotspot) iter.next();
-                Utils.getInstance().fetchParseObject(h);
-                ParseGeoPoint parsePoint = h.getParseGeoPoint();
-                LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
+                LatLng hotspotLoc = h.getHotspotLocation();
                 Marker m = mMap.addMarker(new MarkerOptions().position(hotspotLoc)
                                 .icon(BitmapDescriptorFactory.defaultMarker(30))
                                 .title("Next Pickup: N/A")
@@ -365,19 +364,12 @@ public class MainActivity extends ActionBarActivity implements
         return false;
     }
 
+
     private void updateLocation() {
         if (mCurrentLocation != null){
             mLatitude = mCurrentLocation.getLatitude();
             mLongitude = mCurrentLocation.getLongitude();
-
-            // Fetch user's public profile
-            ParseUser currentUser = ParseUser.getCurrentUser();
-            PublicProfile pubProfile = (PublicProfile) currentUser.get("publicProfile");
-            Utils.getInstance().fetchParseObject(pubProfile);
-
-            // Insert coordinates into the user's public profile lastKnownLocation
-            ParseGeoPoint userLoc = new ParseGeoPoint(mLatitude, mLongitude);
-            pubProfile.setLastKnownLocation(userLoc);
+            backend.setUserLastKnownLocation(mLatitude, mLongitude);
         }
     }
 
@@ -435,10 +427,8 @@ public class MainActivity extends ActionBarActivity implements
         int i = 1;
         while (iter.hasNext()) {
             Hotspot h = (Hotspot) iter.next();
-            Utils.getInstance().fetchParseObject(h);
-            ParseGeoPoint parsePoint = h.getParseGeoPoint();
-            LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
-            if (m.getPosition().longitude == parsePoint.getLongitude() && m.getPosition().latitude == parsePoint.getLatitude()){
+            backend.fetchIfNeeded(h);
+            if (h.isHotspotAtLocation(m.getPosition())) {
                 return i;
             }
             i += 1;
@@ -451,10 +441,8 @@ public class MainActivity extends ActionBarActivity implements
         int i = 1;
         while (iter.hasNext()) {
             Hotspot h = (Hotspot) iter.next();
-            Utils.getInstance().fetchParseObject(h);
-            ParseGeoPoint parsePoint = h.getParseGeoPoint();
-            LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
-            if (m.getPosition().longitude == parsePoint.getLongitude() && m.getPosition().latitude == parsePoint.getLatitude()){
+            backend.fetchIfNeeded(h);
+            if (h.isHotspotAtLocation(m.getPosition())) {
                 return h;
             }
             i += 1;
@@ -480,41 +468,6 @@ public class MainActivity extends ActionBarActivity implements
             }
         }
     }
-    
-    public ArrayList<PublicProfile> getActiveDrivers(Hotspot h){
-        ArrayList<MatchRoute> matchRoute;
-        ArrayList<PublicProfile> driversPubProf = new ArrayList<PublicProfile>();
-        ParseQuery<MatchRoute> query = ParseQuery.getQuery("MatchRoute");
-
-        try {
-            matchRoute = new ArrayList<MatchRoute>(query.find());
-            for(MatchRoute r:matchRoute){
-                ParseUser driver = r.getDriver();
-                try {
-                    driver.fetchIfNeeded();
-                } catch (ParseException e) {
-
-                }
-                PublicProfile pubProfile= (PublicProfile) driver.get("publicProfile");
-                Utils.getInstance().fetchParseObject(pubProfile);
-
-                ParseGeoPoint lkl = pubProfile.getLastKnownLocation();
-
-                Hotspot g = r.getHotspot();
-                if (g != null) {
-                    if (g.getObjectId() == h.getObjectId()) {
-                        driversPubProf.add(pubProfile);
-                    }
-                }
-            }
-            return driversPubProf;
-
-        } catch (ParseException e) {
-            // Handle server retrieval failure
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     private void fetchParseObjects() {
         this.currUser = ParseUser.getCurrentUser();
@@ -531,25 +484,8 @@ public class MainActivity extends ActionBarActivity implements
             logout();
         }
 
-        this.serverHotspots = getAllHotspots();
-
+        this.serverHotspots = backend.getAllHotspots();
     }
-
-    private Set<Hotspot> getAllHotspots() {
-        // Grab the hotspot set from the server
-        Set<Hotspot> hSpots;
-        ParseQuery<Hotspot> hotspotQuery = ParseQuery.getQuery("Hotspot");
-        hotspotQuery.orderByDescending("hotspotId");
-        try {
-            hSpots = new HashSet<Hotspot>(hotspotQuery.find());
-        } catch (ParseException e) {
-            // Handle a server query fail
-            return null;
-        }
-
-        return hSpots;
-    }
-
     public LatLng makeLatLng(double a, double b){
         return new LatLng(a,b);
     }

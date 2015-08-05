@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.gogreen.greenmachine.R;
+import com.gogreen.greenmachine.interBack.InterBack;
 import com.gogreen.greenmachine.main.MainActivity;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
@@ -54,6 +55,8 @@ public class RiderMatchedActivity extends ActionBarActivity implements OnMapRead
     private Button mRideComplete;
 
     private MatchRoute mRoute;
+
+    InterBack backend = new InterBack();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,7 +125,7 @@ public class RiderMatchedActivity extends ActionBarActivity implements OnMapRead
     private void getInfo() {
         ParseUser currentUser = ParseUser.getCurrentUser();
         PublicProfile curUserPublicProfile = (PublicProfile) currentUser.get("publicProfile");
-        Utils.getInstance().fetchParseObject(curUserPublicProfile);
+        backend.fetchIfNeeded(curUserPublicProfile);
         List<MatchRoute> matchRoutes = new ArrayList<MatchRoute>();
         boolean foundRoute = false;
 
@@ -137,7 +140,7 @@ public class RiderMatchedActivity extends ActionBarActivity implements OnMapRead
         Iterator routeIterator = matchRoutes.iterator();
         while (routeIterator.hasNext() && !foundRoute) {
             MatchRoute route = (MatchRoute) routeIterator.next();
-            Utils.getInstance().fetchParseObject(route);
+            backend.fetchIfNeeded(route);
 
             ParseUser driver = route.getDriver();
             try {
@@ -152,10 +155,10 @@ public class RiderMatchedActivity extends ActionBarActivity implements OnMapRead
                 PublicProfile riderProfile = (PublicProfile) ridersIter.next();
                 if (riderProfile.getObjectId().equals(curUserPublicProfile.getObjectId())) {
                     PublicProfile driverProfile = (PublicProfile) driver.get("publicProfile");
-                    Utils.getInstance().fetchParseObject(driverProfile);
+                    backend.fetchIfNeeded(driverProfile);
 
                     Hotspot hotspot = route.getHotspot();
-                    Utils.getInstance().fetchParseObject(hotspot);
+                    backend.fetchIfNeeded(hotspot);
 
                     this.hotspotLocation = hotspot.getParseGeoPoint();
                     this.driverLocation = driverProfile.getLastKnownLocation();

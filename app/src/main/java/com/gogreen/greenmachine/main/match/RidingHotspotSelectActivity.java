@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.gc.materialdesign.views.ButtonFloat;
 import com.gogreen.greenmachine.R;
+import com.gogreen.greenmachine.interBack.InterBack;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRequest;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
@@ -79,6 +80,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
     private Date arriveByDate;
     private boolean riderMatched;
     private MatchRoute.Destination destination;
+    private InterBack backend = new InterBack();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +98,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
         this.riderMatched = false;
 
         // Grab server hotspots
-        this.serverHotspots = getAllHotspots();
+        this.serverHotspots = backend.getAllHotspots();
 
         // Initialize selectedHotspots
         this.selectedHotspots = new HashSet<Hotspot>();
@@ -185,19 +187,12 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
         mGoogleApiClient.disconnect();
     }
 
+
     private void updateLocation() {
-        if (mCurrentLocation != null) {
+        if (mCurrentLocation != null){
             mLatitude = mCurrentLocation.getLatitude();
             mLongitude = mCurrentLocation.getLongitude();
-
-            // Fetch user's public profile
-            ParseUser currentUser = ParseUser.getCurrentUser();
-            PublicProfile pubProfile = (PublicProfile) currentUser.get("publicProfile");
-            Utils.getInstance().fetchParseObject(pubProfile);
-
-            // Insert coordinates into the user's public profile lastKnownLocation
-            ParseGeoPoint userLoc = new ParseGeoPoint(mLatitude, mLongitude);
-            pubProfile.setLastKnownLocation(userLoc);
+            backend.setUserLastKnownLocation(mLatitude, mLongitude);
         }
     }
 
@@ -312,8 +307,8 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
             Iterator iter = this.serverHotspots.iterator();
             while (iter.hasNext()) {
                 Hotspot h = (Hotspot) iter.next();
-                ParseGeoPoint parsePoint = h.getParseGeoPoint();
-                LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
+                backend.fetchIfNeeded(h);
+                LatLng hotspotLoc = h.getHotspotLocation();
                 MarkerOptions markerOptions = new MarkerOptions().position(hotspotLoc)
                         .icon(BitmapDescriptorFactory.defaultMarker(30))
                         .title(h.getName())
@@ -348,22 +343,17 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
         m.setAlpha(1.0f);
         // Grab location & add to Hotspot set
         LatLng mPoint = m.getPosition();
-        ParseGeoPoint hPoint = new ParseGeoPoint(mPoint.latitude, mPoint.longitude);
 
         // Find the original hotspot item and add it to the set
         Iterator iter = this.serverHotspots.iterator();
         while (iter.hasNext()) {
             Hotspot hSpot = (Hotspot) iter.next();
-            Utils.getInstance().fetchParseObject(hSpot);
-            if (isEqualParseGeoPoint(hPoint, hSpot.getParseGeoPoint())) {
+            backend.fetchIfNeeded(hSpot);
+            if (hSpot.isHotspotAtLocation(mPoint)) {
                 this.selectedHotspots.add(hSpot);
                 break;
             }
         }
-    }
-
-    private boolean isEqualParseGeoPoint(ParseGeoPoint p1, ParseGeoPoint p2) {
-        return (p1.getLatitude() == p2.getLatitude() && p1.getLongitude() == p2.getLongitude());
     }
 
     public void resetMarker(Marker m) {
@@ -371,32 +361,17 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
         m.setIcon(BitmapDescriptorFactory.defaultMarker(30));
 
         LatLng mPoint = m.getPosition();
-        ParseGeoPoint hPoint = new ParseGeoPoint(mPoint.latitude, mPoint.longitude);
 
         // Find the original hotspot item and add it to the set
         Iterator iter = this.serverHotspots.iterator();
         while (iter.hasNext()) {
             Hotspot hSpot = (Hotspot) iter.next();
-            Utils.getInstance().fetchParseObject(hSpot);
-            if (isEqualParseGeoPoint(hPoint, hSpot.getParseGeoPoint())) {
+            backend.fetchIfNeeded(hSpot);
+            if (hSpot.isHotspotAtLocation(mPoint)) {
                 this.selectedHotspots.remove(hSpot);
                 break;
             }
         }
-    }
-
-    private Set<Hotspot> getAllHotspots() {
-        // Grab the hotspot set from the server
-        ParseQuery<Hotspot> hotspotQuery = ParseQuery.getQuery("Hotspot");
-        hotspotQuery.orderByDescending("hotspotId");
-        try {
-            serverHotspots = new HashSet<Hotspot>(hotspotQuery.find());
-        } catch (ParseException e) {
-            // Handle a server query fail
-            return null;
-        }
-
-        return serverHotspots;
     }
 
     private boolean createMatchRequest() {
@@ -473,7 +448,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                     && isInTimeWindow(routeCal,myCal,600)) {
                 // Use the hotspot
                 Hotspot routeHotspot = route.getHotspot();
-                Utils.getInstance().fetchParseObject(routeHotspot);
+                backend.fetchIfNeeded(routeHotspot);
 
                 // Check if the route hotspot is in selected hotspots
                 if (this.selectedHotspots.contains(routeHotspot)) {
@@ -481,7 +456,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                     boolean alreadyRider = false;
                     ArrayList<PublicProfile> riders = (ArrayList<PublicProfile>) route.getRiders();
                     PublicProfile myProfile = (PublicProfile) ParseUser.getCurrentUser().get("publicProfile");
-                    Utils.getInstance().fetchParseObject(myProfile);
+                    backend.fetchIfNeeded(myProfile);
 
                     Iterator profIterator = riders.iterator();
                     while (profIterator.hasNext()) {
@@ -514,10 +489,10 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                 if (!intersection.isEmpty()) {
                     Iterator hspotIterator = intersection.iterator();
                     Hotspot hotspot = (Hotspot) hspotIterator.next();
-                    Utils.getInstance().fetchParseObject(hotspot);
+                    backend.fetchIfNeeded(hotspot);
                     if (remainingCapacity > 0) {
                         PublicProfile myProfile = (PublicProfile) ParseUser.getCurrentUser().get("publicProfile");
-                        Utils.getInstance().fetchParseObject(myProfile);
+                        backend.fetchIfNeeded(myProfile);
                         this.matchRoute = route;
                         this.matchRoute.setCapacity(remainingCapacity - 1);
                         this.matchRoute.addRider(myProfile);

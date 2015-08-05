@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 import com.gogreen.greenmachine.R;
 import com.gogreen.greenmachine.distmatrix.RetrieveDistanceMatrix;
+import com.gogreen.greenmachine.interBack.InterBack;
 import com.gogreen.greenmachine.main.MainActivity;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
@@ -60,6 +61,8 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
     private Button mRideComplete;
 
     private MatchRoute mRoute;
+
+    InterBack backend = new InterBack();
 
     static final HttpTransport HTTP_TRANSPORT = AndroidHttp.newCompatibleTransport();
     static final JsonFactory JSON_FACTORY = new JacksonFactory();
@@ -162,14 +165,14 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
         Iterator routeIterator = matchRoutes.iterator();
         while (routeIterator.hasNext() && !foundRoute) {
             MatchRoute route = (MatchRoute) routeIterator.next();
-            Utils.getInstance().fetchParseObject(route);
+            backend.fetchIfNeeded(route);
 
             if (route.getDriver().getObjectId().equals(currentUser.getObjectId())) {
                 ArrayList<PublicProfile> riders = route.getRiders();
                 Iterator ridersIter = riders.iterator();
                 while (ridersIter.hasNext()) {
                     PublicProfile riderProfile = (PublicProfile) ridersIter.next();
-                    Utils.getInstance().fetchParseObject(riderProfile);
+                    backend.fetchIfNeeded(riderProfile);
 
                     this.mRiderText.setText(riderProfile.getFirstName());
 
@@ -179,7 +182,7 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
                 }
 
                 Hotspot hotspot = route.getHotspot();
-                Utils.getInstance().fetchParseObject(hotspot);
+                backend.fetchIfNeeded(hotspot);
 
                 this.hotspotLocation = hotspot.getParseGeoPoint();
                 this.mRoute = route;
@@ -193,7 +196,7 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
         mMap = map;
         ParseUser currUser = ParseUser.getCurrentUser();
         PublicProfile myProfile = (PublicProfile) currUser.get("publicProfile");
-        Utils.getInstance().fetchParseObject(myProfile);
+        backend.fetchIfNeeded(myProfile);
         ParseGeoPoint myLoc = myProfile.getLastKnownLocation();
 
         double hotspotLat = this.hotspotLocation.getLatitude();
