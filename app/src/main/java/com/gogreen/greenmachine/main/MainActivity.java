@@ -365,19 +365,23 @@ public class MainActivity extends ActionBarActivity implements
         return false;
     }
 
+
+    private void updateLastKnownLocation(double lat, double lon) {
+        // Fetch user's public profile
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        PublicProfile pubProfile = (PublicProfile) currentUser.get("publicProfile");
+        Utils.getInstance().fetchParseObject(pubProfile);
+
+        // Insert coordinates into the user's public profile lastKnownLocation
+        ParseGeoPoint userLoc = new ParseGeoPoint(mLatitude, mLongitude);
+        pubProfile.setLastKnownLocation(userLoc);
+    }
+
     private void updateLocation() {
         if (mCurrentLocation != null){
             mLatitude = mCurrentLocation.getLatitude();
             mLongitude = mCurrentLocation.getLongitude();
-
-            // Fetch user's public profile
-            ParseUser currentUser = ParseUser.getCurrentUser();
-            PublicProfile pubProfile = (PublicProfile) currentUser.get("publicProfile");
-            Utils.getInstance().fetchParseObject(pubProfile);
-
-            // Insert coordinates into the user's public profile lastKnownLocation
-            ParseGeoPoint userLoc = new ParseGeoPoint(mLatitude, mLongitude);
-            pubProfile.setLastKnownLocation(userLoc);
+            updateLastKnownLocation(mLatitude, mLongitude);
         }
     }
 
