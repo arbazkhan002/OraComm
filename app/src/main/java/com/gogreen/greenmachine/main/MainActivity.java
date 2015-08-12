@@ -461,6 +461,7 @@ public class MainActivity extends ActionBarActivity implements
     }
 
     private void fetchObjects() {
+        this.currUser = new interUser();
         this.currUser.setUser(backend.getCurrentUser());
         this.navDrawerEmail = currUser.getEmail();
         if (currUser.getPrivProfile() == null)
