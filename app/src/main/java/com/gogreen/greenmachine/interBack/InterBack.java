@@ -4,7 +4,10 @@ import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
 import com.gogreen.greenmachine.parseobjects.PublicProfile;
+import com.gogreen.greenmachine.util.Ifunction;
 import com.gogreen.greenmachine.util.Utils;
+import com.parse.LogOutCallback;
+import com.parse.ParseCloud;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
@@ -12,7 +15,9 @@ import com.parse.ParseQuery;
 import com.parse.ParseUser;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -80,6 +85,24 @@ public class InterBack {
         }
     }
 
+    public String getDriverLocations(Hotspot h) {
+        String origins = "";
+        try {
+            HashMap<String, Object> cloudParams = new HashMap<String, Object>();
+            cloudParams.put("hotspotObj", h.getObjectId());
+            List<ParseGeoPoint> result = ParseCloud.callFunction("getActiveDrivers", cloudParams);
+
+            for (ParseGeoPoint p : result) {
+                origins += p.getLatitude() + "," + p.getLongitude() + "|";
+            }
+        }
+        catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return origins;
+    }
+
     // get the car information of the current driver
     public String getDriverCarInfo() {
         ParseUser currUser = ParseUser.getCurrentUser();
@@ -96,4 +119,14 @@ public class InterBack {
         Utils.getInstance().fetchParseObject(p);
     }
 
+    public void logOutInBackground(final Ifunction f) {
+        ParseUser.logOutInBackground(new LogOutCallback() {
+            public void done(ParseException e) {
+                if (e == null) {
+                    f.execute();
+                }
+            }
+        });
+
+    }
 }

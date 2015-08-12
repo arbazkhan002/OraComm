@@ -38,6 +38,7 @@ import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
 import com.gogreen.greenmachine.parseobjects.PublicProfile;
+import com.gogreen.greenmachine.util.Ifunction;
 import com.gogreen.greenmachine.util.Tuple;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -68,6 +69,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
 
 public class MainActivity extends ActionBarActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -570,12 +572,10 @@ public class MainActivity extends ActionBarActivity implements
         dialog.setMessage(getString(R.string.progress_logout));
         dialog.show();
 
-        ParseUser.logOutInBackground(new LogOutCallback() {
-            public void done(ParseException e) {
-                if (e == null) {
-                    dialog.dismiss();
-                    startWelcomeActivity();
-                }
+        backend.logOutInBackground(new Ifunction() {
+            public void execute() {
+                dialog.dismiss();
+                startWelcomeActivity();
             }
         });
     }
@@ -596,25 +596,14 @@ public class MainActivity extends ActionBarActivity implements
             super.onPreExecute();
         }
         @Override
+        // returns locations of the drivers and the reference to the original marker
         protected Tuple<String,Marker[]> doInBackground(Tuple<Hotspot,Marker[]>... params) {
             // Loop through every 30 seconds and try to find a rider
             String origins = "";
             Hotspot h = params[0].x;
-            HashMap<String, Object> cloudParams = new HashMap<String, Object>();
-            cloudParams.put("hotspotObj", h.getObjectId());
-            try {
-                List<ParseGeoPoint> result = ParseCloud.callFunction("getActiveDrivers", cloudParams);
-
-                for (ParseGeoPoint p : result) {
-                    origins += p.getLatitude() + "," + p.getLongitude() + "|";
-                }
-                origins = origins.length()>0 ? (origins.substring(0, origins.length() - 1)) : "";
-                return new Tuple<String,Marker[]>(origins,(params[0].y));
-
-            } catch (ParseException e) {
-                e.printStackTrace();
-                return null;
-            }
+            origins = backend.getDriverLocations(h);
+            origins = origins.length() > 0 ? (origins.substring(0, origins.length() - 1)) : "";
+            return new Tuple<String,Marker[]>(origins,(params[0].y));
 
         }
 
