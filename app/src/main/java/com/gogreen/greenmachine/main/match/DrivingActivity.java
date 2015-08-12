@@ -20,9 +20,6 @@ import android.widget.TimePicker;
 import com.gc.materialdesign.views.ButtonRectangle;
 import com.gogreen.greenmachine.R;
 import com.gogreen.greenmachine.interBack.InterBack;
-import com.gogreen.greenmachine.parseobjects.PrivateProfile;
-import com.parse.ParseException;
-import com.parse.ParseUser;
 
 import java.util.Calendar;
 

@@ -1,19 +1,44 @@
 package com.gogreen.greenmachine.interBack.objects;
 
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
+import com.gogreen.greenmachine.parseobjects.PublicProfile;
+import com.gogreen.greenmachine.util.Utils;
+import com.google.android.gms.maps.model.LatLng;
 import com.parse.Parse;
 import com.parse.ParseException;
+import com.parse.ParseGeoPoint;
 import com.parse.ParseUser;
 
 /**
  * Created by arbkhan on 8/12/2015.
  */
-public class interUser {
+public class InterUser {
     ParseUser u;
     private PrivateProfile privProfile = null;
+    private PublicProfile publicProfile = null;
+    LatLng lastKnownLocation;
     private String firstName;
     private String lastName;
     private String email;
+
+    public LatLng getLastKnownLocation() {
+        ParseGeoPoint myLoc = getPublicProfile().getLastKnownLocation();
+        return new LatLng(myLoc.getLatitude(), myLoc.getLongitude());
+    }
+
+    public void setLastKnownLocation(LatLng lastKnownLocation) {
+        getPublicProfile().setLastKnownLocation(new ParseGeoPoint(lastKnownLocation.latitude, lastKnownLocation.longitude));
+    }
+
+    public PublicProfile getPublicProfile() {
+        PublicProfile myProfile = (PublicProfile) (this.u).get("publicProfile");
+        Utils.getInstance().fetchParseObject(myProfile);
+        return myProfile;
+    }
+
+    public void setPublicProfile(PublicProfile publicProfile) {
+        this.publicProfile = publicProfile;
+    }
 
     public String getEmail() {
         if (u == null)

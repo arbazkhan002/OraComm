@@ -1,6 +1,8 @@
 package com.gogreen.greenmachine.parseobjects;
 
+import com.gogreen.greenmachine.interBack.objects.InterUser;
 import com.parse.ParseClassName;
+import com.parse.ParseException;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
 import com.parse.ParseUser;
@@ -30,7 +32,8 @@ public class MatchRoute extends ParseObject {
         put("riders", value);
     }
 
-    public void addRider(PublicProfile rider) {
+    public void addRider(InterUser user) {
+        PublicProfile rider = user.getPublicProfile();
         ArrayList<PublicProfile> riders;
         try {
             riders = getRiders();
@@ -126,11 +129,20 @@ public class MatchRoute extends ParseObject {
         setRiders(riders);
     }
 
-    public void updateMatchRoute(Hotspot hotspot, PublicProfile rider, TripStatus status, int capacity) {
+    public void updateMatchRoute(Hotspot hotspot, InterUser rider, TripStatus status, int capacity) {
         setHotspot(hotspot);
         addRider(rider);
         setStatus(status);
         setCapacity(capacity);
+    }
+
+    public boolean saveRequest() {
+        try {
+            this.save();
+            return true;
+        } catch (ParseException e) {
+            return false;
+        }
     }
 
     public enum Destination {

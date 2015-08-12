@@ -15,11 +15,9 @@ import android.widget.TextView;
 import com.gogreen.greenmachine.R;
 import com.gogreen.greenmachine.distmatrix.RetrieveDistanceMatrix;
 import com.gogreen.greenmachine.interBack.InterBack;
+import com.gogreen.greenmachine.interBack.objects.InterUser;
 import com.gogreen.greenmachine.main.MainActivity;
-import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
-import com.gogreen.greenmachine.parseobjects.PublicProfile;
-import com.gogreen.greenmachine.util.Utils;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -37,10 +35,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson.JacksonFactory;
-import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
-import com.parse.ParseQuery;
-import com.parse.ParseUser;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -106,7 +101,7 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
 
         MapFragment mapFragment = (MapFragment) getFragmentManager()
                 .findFragmentById(R.id.map);
-        getInfo();
+        backend.getDriverInfo(new DriverMatchedActivity[]{this});
         mapFragment.getMapAsync(this);
 
         mRiderPhoneTextView = (TextView) findViewById(R.id.rider_phone_text);
@@ -149,61 +144,18 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
         return super.onOptionsItemSelected(item);
     }
 
-    private void getInfo() {
-        ParseUser currentUser = ParseUser.getCurrentUser();
-        List<MatchRoute> matchRoutes = new ArrayList<MatchRoute>();
-        boolean foundRoute = false;
-
-        // Query for all MatchRoutes
-        ParseQuery<MatchRoute> matchRoutesQuery = ParseQuery.getQuery("MatchRoute");
-        try {
-            matchRoutes = new ArrayList<MatchRoute>(matchRoutesQuery.find());
-        } catch (ParseException e) {
-            // handle later since low on time
-        }
-
-        Iterator routeIterator = matchRoutes.iterator();
-        while (routeIterator.hasNext() && !foundRoute) {
-            MatchRoute route = (MatchRoute) routeIterator.next();
-            backend.fetchIfNeeded(route);
-
-            if (route.getDriver().getObjectId().equals(currentUser.getObjectId())) {
-                ArrayList<PublicProfile> riders = route.getRiders();
-                Iterator ridersIter = riders.iterator();
-                while (ridersIter.hasNext()) {
-                    PublicProfile riderProfile = (PublicProfile) ridersIter.next();
-                    backend.fetchIfNeeded(riderProfile);
-
-                    this.mRiderText.setText(riderProfile.getFirstName());
-
-                    ParseGeoPoint riderLocation = riderProfile.getLastKnownLocation();
-                    this.riderLocations.add(riderLocation);
-                    this.riderNumber = riderProfile.getPhoneNumber();
-                }
-
-                Hotspot hotspot = route.getHotspot();
-                backend.fetchIfNeeded(hotspot);
-
-                this.hotspotLocation = hotspot.getParseGeoPoint();
-                this.mRoute = route;
-                foundRoute = true;
-            }
-        }
-    }
-
     @Override
     public void onMapReady(GoogleMap map) {
         mMap = map;
-        ParseUser currUser = ParseUser.getCurrentUser();
-        PublicProfile myProfile = (PublicProfile) currUser.get("publicProfile");
-        backend.fetchIfNeeded(myProfile);
-        ParseGeoPoint myLoc = myProfile.getLastKnownLocation();
+        InterUser user = new InterUser();
+        user.setUser(backend.getCurrentUser());
+        LatLng myLoc = user.getLastKnownLocation();
 
         double hotspotLat = this.hotspotLocation.getLatitude();
         double hotspotLong = this.hotspotLocation.getLongitude();
 
         CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(new LatLng(myLoc.getLatitude(), myLoc.getLongitude()))      // Sets the center of the map
+                .target(new LatLng(myLoc.latitude, myLoc.longitude))      // Sets the center of the map
                 .zoom(10)
                 .build();                   // Creates a CameraPosition from the builder
         mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
@@ -221,5 +173,25 @@ public class DriverMatchedActivity extends ActionBarActivity implements OnMapRea
         mMap.addMarker(new MarkerOptions().position(hotspotLoc)
                 .icon(BitmapDescriptorFactory.defaultMarker(30))
                 .alpha(0.75f));
+    }
+
+    public void mRiderTextSetText(String s){
+        this.mRiderText.setText(s);
+    }
+
+    public void addToRiderLocations(ParseGeoPoint riderLocation){
+        this.riderLocations.add(riderLocation);
+    }
+
+    public void setRiderNumber(String s) {
+        this.riderNumber = s;
+    }
+
+    public void setHotspotLocation(ParseGeoPoint p) {
+        this.hotspotLocation = p;
+    }
+
+    public void setmRoute(MatchRoute route) {
+        this.mRoute = route;
     }
 }

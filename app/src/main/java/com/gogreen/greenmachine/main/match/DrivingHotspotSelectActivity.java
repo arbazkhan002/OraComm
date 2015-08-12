@@ -16,7 +16,7 @@ import com.gogreen.greenmachine.R;
 import com.gogreen.greenmachine.interBack.InterBack;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
-import com.gogreen.greenmachine.parseobjects.PublicProfile;
+import com.gogreen.greenmachine.util.Utils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -31,14 +31,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.parse.ParseException;
-import com.parse.ParseGeoPoint;
-import com.parse.ParseQuery;
-import com.parse.ParseUser;
-
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -87,8 +80,8 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
 
         // Process intent items
         this.currentCapacity = (int) getIntent().getExtras().get("capacity");
-        this.matchByDate = convertToDateObject(getIntent().getExtras().get("matchDate").toString());
-        this.arriveByDate = convertToDateObject(getIntent().getExtras().get("arriveDate").toString());
+        this.matchByDate = Utils.getInstance().convertToDateObject(getIntent().getExtras().get("matchDate").toString());
+        this.arriveByDate = Utils.getInstance().convertToDateObject(getIntent().getExtras().get("arriveDate").toString());
         this.destination = processDestination(getIntent().getExtras().get("destination").toString());
         this.driverCar = (String) getIntent().getExtras().get("driverCar");
 
@@ -350,60 +343,19 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
         }
     }
 
-    private boolean checkForRiders() {
-        // MatchRoute should be created so now we peridically check if a rider gets added to our request
-
-        try {
-            this.matchRoute.fetch();
-        } catch (ParseException e) {
-            return false;
-        }
-        ArrayList<PublicProfile> riders = this.matchRoute.getRiders();
-        boolean foundRider = !riders.isEmpty();
-        if (foundRider) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     private boolean createMatchRoute() {
         // Create a match route
         this.matchRoute = new MatchRoute();
         ArrayList<Hotspot> selectedHotspotsList = new ArrayList<Hotspot>(selectedHotspots);
-        matchRoute.initializeMatchRoute(ParseUser.getCurrentUser(), selectedHotspotsList, destination,
-                MatchRoute.TripStatus.NOT_STARTED, currentCapacity, matchByDate,
-                arriveByDate, driverCar, new ArrayList<PublicProfile>());
-        try {
-            matchRoute.save();
-            return true;
-        } catch (ParseException e) {
-            return false;
-        }
+        return backend.sendRiderRequest(new MatchRoute[]{matchRoute}, selectedHotspotsList, currentCapacity, driverCar, matchByDate, arriveByDate, destination);
     }
 
     private void processResult() {
-        ArrayList<PublicProfile> riders = this.matchRoute.getRiders();
-        if (riders.isEmpty()) {
+        if ((matchRoute.getRiders()).isEmpty()) {
             Toast.makeText(DrivingHotspotSelectActivity.this, getString(R.string.progress_no_rider_found), Toast.LENGTH_SHORT).show();
         } else {
             startNextActivity();
         }
-    }
-
-    private Date convertToDateObject(String s) {
-        SimpleDateFormat ft = new SimpleDateFormat ("yyyy-MM-dd h:m a");
-        Calendar cal = Calendar.getInstance();
-        String input = cal.get(Calendar.YEAR)+"-"+(cal.get(Calendar.MONTH)+1)+"-"+cal.get(Calendar.DATE)+" " +s;
-
-        Date t = new Date();
-
-        try {
-            t = ft.parse(input);
-        } catch (java.text.ParseException e) {
-            e.printStackTrace();
-        }
-        return t;
     }
 
     private MatchRoute.Destination processDestination(String s) {
@@ -433,7 +385,7 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
                 if (!routeCreated) {
                     routeCreated = createMatchRoute();
                 } else if (!riderFound) {
-                    riderFound = checkForRiders();
+                    riderFound = backend.checkForRiders(matchRoute);
                 } else if (riderFound) {
                     break;
                 }

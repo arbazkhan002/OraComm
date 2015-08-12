@@ -27,7 +27,7 @@ import com.gogreen.greenmachine.distmatrix.Result;
 import com.gogreen.greenmachine.distmatrix.RetrieveDistanceMatrix;
 import com.gogreen.greenmachine.distmatrix.Row;
 import com.gogreen.greenmachine.interBack.InterBack;
-import com.gogreen.greenmachine.interBack.objects.interUser;
+import com.gogreen.greenmachine.interBack.objects.InterUser;
 import com.gogreen.greenmachine.main.badges.BadgeActivity;
 import com.gogreen.greenmachine.main.login.DispatchActivity;
 import com.gogreen.greenmachine.main.match.DrivingActivity;
@@ -81,7 +81,7 @@ public class MainActivity extends ActionBarActivity implements
     private final static String LAST_UPDATED_TIME_STRING_KEY = "last-updated-time-string-key";
     private final static String LOCATION_KEY = "location-key";
 
-    private interUser currUser;
+    private InterUser currUser;
     private String firstName;
     private String lastName;
 
@@ -461,7 +461,7 @@ public class MainActivity extends ActionBarActivity implements
     }
 
     private void fetchObjects() {
-        this.currUser = new interUser();
+        this.currUser = new InterUser();
         this.currUser.setUser(backend.getCurrentUser());
         this.navDrawerEmail = currUser.getEmail();
         if (currUser.getPrivProfile() == null)
