@@ -1,5 +1,6 @@
 package com.gogreen.greenmachine.interBack;
 
+import com.gogreen.greenmachine.main.MainActivity;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
 import com.gogreen.greenmachine.parseobjects.PrivateProfile;
@@ -127,6 +128,9 @@ public class InterBack {
                 }
             }
         });
+    }
 
+    public ParseUser getCurrentUser() {
+        return ParseUser.getCurrentUser();
     }
 }

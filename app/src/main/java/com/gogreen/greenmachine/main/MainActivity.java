@@ -27,6 +27,7 @@ import com.gogreen.greenmachine.distmatrix.Result;
 import com.gogreen.greenmachine.distmatrix.RetrieveDistanceMatrix;
 import com.gogreen.greenmachine.distmatrix.Row;
 import com.gogreen.greenmachine.interBack.InterBack;
+import com.gogreen.greenmachine.interBack.objects.interUser;
 import com.gogreen.greenmachine.main.badges.BadgeActivity;
 import com.gogreen.greenmachine.main.login.DispatchActivity;
 import com.gogreen.greenmachine.main.match.DrivingActivity;
@@ -35,9 +36,6 @@ import com.gogreen.greenmachine.main.navigation.AboutUsActivity;
 import com.gogreen.greenmachine.main.navigation.NavDrawerAdapter;
 import com.gogreen.greenmachine.main.navigation.SettingsActivity;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
-import com.gogreen.greenmachine.parseobjects.MatchRoute;
-import com.gogreen.greenmachine.parseobjects.PrivateProfile;
-import com.gogreen.greenmachine.parseobjects.PublicProfile;
 import com.gogreen.greenmachine.util.Ifunction;
 import com.gogreen.greenmachine.util.Tuple;
 import com.google.android.gms.common.ConnectionResult;
@@ -55,17 +53,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.api.client.http.GenericUrl;
-import com.parse.LogOutCallback;
-import com.parse.ParseCloud;
-import com.parse.ParseException;
-import com.parse.ParseGeoPoint;
-import com.parse.ParseQuery;
-import com.parse.ParseUser;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -92,10 +81,10 @@ public class MainActivity extends ActionBarActivity implements
     private final static String LAST_UPDATED_TIME_STRING_KEY = "last-updated-time-string-key";
     private final static String LOCATION_KEY = "location-key";
 
-    private ParseUser currUser;
-    private PrivateProfile privProfile;
+    private interUser currUser;
     private String firstName;
     private String lastName;
+
 
     private String mLastUpdateTime;
 
@@ -128,8 +117,8 @@ public class MainActivity extends ActionBarActivity implements
         // Initialize location updates
         this.mRequestingLocationUpdates = true;
 
-        // Fetch the parse objects needed
-        fetchParseObjects();
+        // Fetch the objects needed
+        fetchObjects();
 
         // Grab appropriate data for adapter
         String[] navRowTitles = getResources().getStringArray(R.array.navigation_drawer_titles);
@@ -471,23 +460,16 @@ public class MainActivity extends ActionBarActivity implements
         }
     }
 
-    private void fetchParseObjects() {
-        this.currUser = ParseUser.getCurrentUser();
-
+    private void fetchObjects() {
+        this.currUser.setUser(backend.getCurrentUser());
         this.navDrawerEmail = currUser.getEmail();
-
-        this.privProfile = (PrivateProfile) currUser.get("privateProfile");
-
-        try {
-            this.privProfile.fetchIfNeeded();
-            this.firstName = this.privProfile.getFirstName();
-            this.lastName = this.privProfile.getLastName();
-        } catch (ParseException e) {
+        if (currUser.getPrivProfile() == null)
             logout();
-        }
-
+        this.firstName = this.currUser.getFirstName();
+        this.lastName = this.currUser.getLastName();
         this.serverHotspots = backend.getAllHotspots();
     }
+
     public LatLng makeLatLng(double a, double b){
         return new LatLng(a,b);
     }
