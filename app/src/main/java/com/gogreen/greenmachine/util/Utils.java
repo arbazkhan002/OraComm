@@ -17,7 +17,7 @@ public class Utils {
     public static Utils getInstance( ) {
         return singleton;
     }
-    private Date convertToDateObject(String s) {
+    public Date convertToDateObject(String s) {
         SimpleDateFormat ft = new SimpleDateFormat ("yyyy-MM-dd h:m a");
         Calendar cal = Calendar.getInstance();
         String input = cal.get(Calendar.YEAR)+"-"+(cal.get(Calendar.MONTH)+1)+"-"+cal.get(Calendar.DATE)+" " +s;
@@ -32,13 +32,15 @@ public class Utils {
         return t;
     }
 
-    public static void fetchParseObject(ParseObject p){
+    public static boolean fetchParseObject(ParseObject p){
         try{
             p.fetchIfNeeded();
+            return true;
         }
         catch (ParseException e){
             e.printStackTrace();
-        };
+            return false;
+        }
 
     }
 }

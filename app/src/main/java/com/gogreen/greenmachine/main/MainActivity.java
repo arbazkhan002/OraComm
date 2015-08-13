@@ -26,6 +26,8 @@ import com.gogreen.greenmachine.distmatrix.Element;
 import com.gogreen.greenmachine.distmatrix.Result;
 import com.gogreen.greenmachine.distmatrix.RetrieveDistanceMatrix;
 import com.gogreen.greenmachine.distmatrix.Row;
+import com.gogreen.greenmachine.interBack.InterBack;
+import com.gogreen.greenmachine.interBack.objects.InterUser;
 import com.gogreen.greenmachine.main.badges.BadgeActivity;
 import com.gogreen.greenmachine.main.login.DispatchActivity;
 import com.gogreen.greenmachine.main.match.DrivingActivity;
@@ -34,11 +36,7 @@ import com.gogreen.greenmachine.main.navigation.AboutUsActivity;
 import com.gogreen.greenmachine.main.navigation.NavDrawerAdapter;
 import com.gogreen.greenmachine.main.navigation.SettingsActivity;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
-import com.gogreen.greenmachine.parseobjects.MatchRoute;
-import com.gogreen.greenmachine.parseobjects.PrivateProfile;
-import com.gogreen.greenmachine.parseobjects.PublicProfile;
-import com.gogreen.greenmachine.util.Tuple;
-import com.gogreen.greenmachine.util.Utils;
+import com.gogreen.greenmachine.util.Ifunction;
 import com.gogreen.greenmachine.util.Tuple;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -55,20 +53,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.api.client.http.GenericUrl;
-import com.parse.LogOutCallback;
-import com.parse.ParseCloud;
-import com.parse.ParseException;
-import com.parse.ParseGeoPoint;
-import com.parse.ParseQuery;
-import com.parse.ParseUser;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
 
 public class MainActivity extends ActionBarActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -91,10 +81,10 @@ public class MainActivity extends ActionBarActivity implements
     private final static String LAST_UPDATED_TIME_STRING_KEY = "last-updated-time-string-key";
     private final static String LOCATION_KEY = "location-key";
 
-    private ParseUser currUser;
-    private PrivateProfile privProfile;
+    private InterUser currUser;
     private String firstName;
     private String lastName;
+
 
     private String mLastUpdateTime;
 
@@ -117,6 +107,8 @@ public class MainActivity extends ActionBarActivity implements
 
     private Set<Hotspot> serverHotspots;
 
+    private InterBack backend = new InterBack();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,8 +117,8 @@ public class MainActivity extends ActionBarActivity implements
         // Initialize location updates
         this.mRequestingLocationUpdates = true;
 
-        // Fetch the parse objects needed
-        fetchParseObjects();
+        // Fetch the objects needed
+        fetchObjects();
 
         // Grab appropriate data for adapter
         String[] navRowTitles = getResources().getStringArray(R.array.navigation_drawer_titles);
@@ -332,9 +324,7 @@ public class MainActivity extends ActionBarActivity implements
             Iterator iter = this.serverHotspots.iterator();
             while (iter.hasNext()) {
                 Hotspot h = (Hotspot) iter.next();
-                Utils.getInstance().fetchParseObject(h);
-                ParseGeoPoint parsePoint = h.getParseGeoPoint();
-                LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
+                LatLng hotspotLoc = h.getHotspotLocation();
                 Marker m = mMap.addMarker(new MarkerOptions().position(hotspotLoc)
                                 .icon(BitmapDescriptorFactory.defaultMarker(30))
                                 .title("Next Pickup: N/A")
@@ -365,23 +355,11 @@ public class MainActivity extends ActionBarActivity implements
         return false;
     }
 
-
-    private void updateLastKnownLocation(double lat, double lon) {
-        // Fetch user's public profile
-        ParseUser currentUser = ParseUser.getCurrentUser();
-        PublicProfile pubProfile = (PublicProfile) currentUser.get("publicProfile");
-        Utils.getInstance().fetchParseObject(pubProfile);
-
-        // Insert coordinates into the user's public profile lastKnownLocation
-        ParseGeoPoint userLoc = new ParseGeoPoint(mLatitude, mLongitude);
-        pubProfile.setLastKnownLocation(userLoc);
-    }
-
     private void updateLocation() {
         if (mCurrentLocation != null){
             mLatitude = mCurrentLocation.getLatitude();
             mLongitude = mCurrentLocation.getLongitude();
-            updateLastKnownLocation(mLatitude, mLongitude);
+            backend.setUserLastKnownLocation(mLatitude, mLongitude);
         }
     }
 
@@ -439,10 +417,8 @@ public class MainActivity extends ActionBarActivity implements
         int i = 1;
         while (iter.hasNext()) {
             Hotspot h = (Hotspot) iter.next();
-            Utils.getInstance().fetchParseObject(h);
-            ParseGeoPoint parsePoint = h.getParseGeoPoint();
-            LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
-            if (m.getPosition().longitude == parsePoint.getLongitude() && m.getPosition().latitude == parsePoint.getLatitude()){
+            backend.fetchIfNeeded(h);
+            if (h.isHotspotAtLocation(m.getPosition())) {
                 return i;
             }
             i += 1;
@@ -455,10 +431,8 @@ public class MainActivity extends ActionBarActivity implements
         int i = 1;
         while (iter.hasNext()) {
             Hotspot h = (Hotspot) iter.next();
-            Utils.getInstance().fetchParseObject(h);
-            ParseGeoPoint parsePoint = h.getParseGeoPoint();
-            LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
-            if (m.getPosition().longitude == parsePoint.getLongitude() && m.getPosition().latitude == parsePoint.getLatitude()){
+            backend.fetchIfNeeded(h);
+            if (h.isHotspotAtLocation(m.getPosition())) {
                 return h;
             }
             i += 1;
@@ -484,74 +458,16 @@ public class MainActivity extends ActionBarActivity implements
             }
         }
     }
-    
-    public ArrayList<PublicProfile> getActiveDrivers(Hotspot h){
-        ArrayList<MatchRoute> matchRoute;
-        ArrayList<PublicProfile> driversPubProf = new ArrayList<PublicProfile>();
-        ParseQuery<MatchRoute> query = ParseQuery.getQuery("MatchRoute");
 
-        try {
-            matchRoute = new ArrayList<MatchRoute>(query.find());
-            for(MatchRoute r:matchRoute){
-                ParseUser driver = r.getDriver();
-                try {
-                    driver.fetchIfNeeded();
-                } catch (ParseException e) {
-
-                }
-                PublicProfile pubProfile= (PublicProfile) driver.get("publicProfile");
-                Utils.getInstance().fetchParseObject(pubProfile);
-
-                ParseGeoPoint lkl = pubProfile.getLastKnownLocation();
-
-                Hotspot g = r.getHotspot();
-                if (g != null) {
-                    if (g.getObjectId() == h.getObjectId()) {
-                        driversPubProf.add(pubProfile);
-                    }
-                }
-            }
-            return driversPubProf;
-
-        } catch (ParseException e) {
-            // Handle server retrieval failure
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private void fetchParseObjects() {
-        this.currUser = ParseUser.getCurrentUser();
-
+    private void fetchObjects() {
+        this.currUser = new InterUser();
+        this.currUser.setUser(backend.getCurrentUser());
         this.navDrawerEmail = currUser.getEmail();
-
-        this.privProfile = (PrivateProfile) currUser.get("privateProfile");
-
-        try {
-            this.privProfile.fetchIfNeeded();
-            this.firstName = this.privProfile.getFirstName();
-            this.lastName = this.privProfile.getLastName();
-        } catch (ParseException e) {
+        if (currUser.getPrivProfile() == null)
             logout();
-        }
-
-        this.serverHotspots = getAllHotspots();
-
-    }
-
-    private Set<Hotspot> getAllHotspots() {
-        // Grab the hotspot set from the server
-        Set<Hotspot> hSpots;
-        ParseQuery<Hotspot> hotspotQuery = ParseQuery.getQuery("Hotspot");
-        hotspotQuery.orderByDescending("hotspotId");
-        try {
-            hSpots = new HashSet<Hotspot>(hotspotQuery.find());
-        } catch (ParseException e) {
-            // Handle a server query fail
-            return null;
-        }
-
-        return hSpots;
+        this.firstName = this.currUser.getFirstName();
+        this.lastName = this.currUser.getLastName();
+        this.serverHotspots = backend.getAllHotspots();
     }
 
     public LatLng makeLatLng(double a, double b){
@@ -638,12 +554,10 @@ public class MainActivity extends ActionBarActivity implements
         dialog.setMessage(getString(R.string.progress_logout));
         dialog.show();
 
-        ParseUser.logOutInBackground(new LogOutCallback() {
-            public void done(ParseException e) {
-                if (e == null) {
-                    dialog.dismiss();
-                    startWelcomeActivity();
-                }
+        backend.logOutInBackground(new Ifunction() {
+            public void execute() {
+                dialog.dismiss();
+                startWelcomeActivity();
             }
         });
     }
@@ -664,25 +578,14 @@ public class MainActivity extends ActionBarActivity implements
             super.onPreExecute();
         }
         @Override
+        // returns locations of the drivers and the reference to the original marker
         protected Tuple<String,Marker[]> doInBackground(Tuple<Hotspot,Marker[]>... params) {
             // Loop through every 30 seconds and try to find a rider
             String origins = "";
             Hotspot h = params[0].x;
-            HashMap<String, Object> cloudParams = new HashMap<String, Object>();
-            cloudParams.put("hotspotObj", h.getObjectId());
-            try {
-                List<ParseGeoPoint> result = ParseCloud.callFunction("getActiveDrivers", cloudParams);
-
-                for (ParseGeoPoint p : result) {
-                    origins += p.getLatitude() + "," + p.getLongitude() + "|";
-                }
-                origins = origins.length()>0 ? (origins.substring(0, origins.length() - 1)) : "";
-                return new Tuple<String,Marker[]>(origins,(params[0].y));
-
-            } catch (ParseException e) {
-                e.printStackTrace();
-                return null;
-            }
+            origins = backend.getDriverLocations(h);
+            origins = origins.length() > 0 ? (origins.substring(0, origins.length() - 1)) : "";
+            return new Tuple<String,Marker[]>(origins,(params[0].y));
 
         }
 

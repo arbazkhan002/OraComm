@@ -1,5 +1,7 @@
 package com.gogreen.greenmachine.parseobjects;
 
+import com.gogreen.greenmachine.util.Utils;
+import com.google.android.gms.maps.model.LatLng;
 import com.parse.ParseClassName;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
@@ -61,6 +63,22 @@ public class Hotspot extends ParseObject {
         }
         final Hotspot other = (Hotspot) obj;
         return other.getHotspotId() == this.getHotspotId();
+    }
+
+    public LatLng getHotspotLocation() {
+        Utils.getInstance().fetchParseObject(this);
+        ParseGeoPoint parsePoint = getParseGeoPoint();
+        LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
+        return hotspotLoc;
+    }
+
+    private boolean isEqualParseGeoPoint(ParseGeoPoint p1, ParseGeoPoint p2) {
+        return (p1.getLatitude() == p2.getLatitude() && p1.getLongitude() == p2.getLongitude());
+    }
+
+    public boolean isHotspotAtLocation(LatLng mPoint) {
+        ParseGeoPoint hPoint = new ParseGeoPoint(mPoint.latitude, mPoint.longitude);
+        return isEqualParseGeoPoint(hPoint, getParseGeoPoint());
     }
 
 }

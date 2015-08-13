@@ -13,9 +13,9 @@ import android.widget.Toast;
 
 import com.gc.materialdesign.views.ButtonFloat;
 import com.gogreen.greenmachine.R;
+import com.gogreen.greenmachine.interBack.InterBack;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
 import com.gogreen.greenmachine.parseobjects.MatchRoute;
-import com.gogreen.greenmachine.parseobjects.PublicProfile;
 import com.gogreen.greenmachine.util.Utils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -31,14 +31,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.parse.ParseException;
-import com.parse.ParseGeoPoint;
-import com.parse.ParseQuery;
-import com.parse.ParseUser;
-
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -78,6 +71,7 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
     private Date arriveByDate;
     private MatchRoute.Destination destination;
     private Set<Hotspot> selectedHotspots;
+    private InterBack backend = new InterBack();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,8 +80,8 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
 
         // Process intent items
         this.currentCapacity = (int) getIntent().getExtras().get("capacity");
-        this.matchByDate = convertToDateObject(getIntent().getExtras().get("matchDate").toString());
-        this.arriveByDate = convertToDateObject(getIntent().getExtras().get("arriveDate").toString());
+        this.matchByDate = Utils.getInstance().convertToDateObject(getIntent().getExtras().get("matchDate").toString());
+        this.arriveByDate = Utils.getInstance().convertToDateObject(getIntent().getExtras().get("arriveDate").toString());
         this.destination = processDestination(getIntent().getExtras().get("destination").toString());
         this.driverCar = (String) getIntent().getExtras().get("driverCar");
 
@@ -95,7 +89,7 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
         this.mRequestingLocationUpdates = true;
 
         // Grab server hotspots
-        this.serverHotspots = getAllHotspots();
+        this.serverHotspots = backend.getAllHotspots();
 
         // Initialize selectedHotspots
         this.selectedHotspots = new HashSet<Hotspot>();
@@ -187,15 +181,7 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
         if (mCurrentLocation != null) {
             mLatitude = mCurrentLocation.getLatitude();
             mLongitude = mCurrentLocation.getLongitude();
-
-            // Fetch user's public profile
-            ParseUser currentUser = ParseUser.getCurrentUser();
-            PublicProfile pubProfile = (PublicProfile) currentUser.get("publicProfile");
-            Utils.getInstance().fetchParseObject(pubProfile);
-
-            // Insert coordinates into the user's public profile lastKnownLocation
-            ParseGeoPoint userLoc = new ParseGeoPoint(mLatitude, mLongitude);
-            pubProfile.setLastKnownLocation(userLoc);
+            backend.setUserLastKnownLocation(mLatitude, mLongitude);
         }
     }
 
@@ -291,8 +277,7 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
             Iterator iter = this.serverHotspots.iterator();
             while (iter.hasNext()) {
                 Hotspot h = (Hotspot) iter.next();
-                ParseGeoPoint parsePoint = h.getParseGeoPoint();
-                LatLng hotspotLoc = new LatLng(parsePoint.getLatitude(), parsePoint.getLongitude());
+                LatLng hotspotLoc = h.getHotspotLocation();
                 MarkerOptions markerOptions = new MarkerOptions().position(hotspotLoc)
                         .icon(BitmapDescriptorFactory.defaultMarker(30))
                         .title(h.getName())
@@ -324,24 +309,20 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
     public void setMarker(Marker m){
         m.setIcon(BitmapDescriptorFactory.defaultMarker(150));
         m.setAlpha(1.0f);
+
         // Grab location & add to Hotspot set
         LatLng mPoint = m.getPosition();
-        ParseGeoPoint hPoint = new ParseGeoPoint(mPoint.latitude, mPoint.longitude);
 
         // Find the original hotspot item and add it to the set
         Iterator iter = this.serverHotspots.iterator();
         while (iter.hasNext()) {
             Hotspot hSpot = (Hotspot) iter.next();
-            Utils.getInstance().fetchParseObject(hSpot);
-            if (isEqualParseGeoPoint(hPoint, hSpot.getParseGeoPoint())) {
+            backend.fetchIfNeeded(hSpot);
+            if (hSpot.isHotspotAtLocation(mPoint)) {
                 this.selectedHotspots.add(hSpot);
                 break;
             }
         }
-    }
-
-    private boolean isEqualParseGeoPoint(ParseGeoPoint p1, ParseGeoPoint p2) {
-        return (p1.getLatitude() == p2.getLatitude() && p1.getLongitude() == p2.getLongitude());
     }
 
     public void resetMarker(Marker m){
@@ -349,48 +330,16 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
         m.setIcon(BitmapDescriptorFactory.defaultMarker(30));
 
         LatLng mPoint = m.getPosition();
-        ParseGeoPoint hPoint = new ParseGeoPoint(mPoint.latitude, mPoint.longitude);
 
         // Find the original hotspot item and add it to the set
         Iterator iter = this.serverHotspots.iterator();
         while (iter.hasNext()) {
             Hotspot hSpot = (Hotspot) iter.next();
-            Utils.getInstance().fetchParseObject(hSpot);
-            if (isEqualParseGeoPoint(hPoint, hSpot.getParseGeoPoint())) {
+            backend.fetchIfNeeded(hSpot);
+            if (hSpot.isHotspotAtLocation(mPoint)) {
                 this.selectedHotspots.remove(hSpot);
                 break;
             }
-        }
-    }
-
-    private Set<Hotspot> getAllHotspots() {
-        // Grab the hotspot set from the server
-        ParseQuery<Hotspot> hotspotQuery = ParseQuery.getQuery("Hotspot");
-        hotspotQuery.orderByDescending("hotspotId");
-        try {
-            serverHotspots = new HashSet<Hotspot>(hotspotQuery.find());
-        } catch (ParseException e) {
-            // Handle a server query fail
-            return null;
-        }
-
-        return serverHotspots;
-    }
-
-    private boolean checkForRiders() {
-        // MatchRoute should be created so now we peridically check if a rider gets added to our request
-
-        try {
-            this.matchRoute.fetch();
-        } catch (ParseException e) {
-            return false;
-        }
-        ArrayList<PublicProfile> riders = this.matchRoute.getRiders();
-        boolean foundRider = !riders.isEmpty();
-        if (foundRider) {
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -398,39 +347,15 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
         // Create a match route
         this.matchRoute = new MatchRoute();
         ArrayList<Hotspot> selectedHotspotsList = new ArrayList<Hotspot>(selectedHotspots);
-        matchRoute.initializeMatchRoute(ParseUser.getCurrentUser(), selectedHotspotsList, destination,
-                MatchRoute.TripStatus.NOT_STARTED, currentCapacity, matchByDate,
-                arriveByDate, driverCar, new ArrayList<PublicProfile>());
-        try {
-            matchRoute.save();
-            return true;
-        } catch (ParseException e) {
-            return false;
-        }
+        return backend.sendRiderRequest(new MatchRoute[]{matchRoute}, selectedHotspotsList, currentCapacity, driverCar, matchByDate, arriveByDate, destination);
     }
 
     private void processResult() {
-        ArrayList<PublicProfile> riders = this.matchRoute.getRiders();
-        if (riders.isEmpty()) {
+        if ((matchRoute.getRiders()).isEmpty()) {
             Toast.makeText(DrivingHotspotSelectActivity.this, getString(R.string.progress_no_rider_found), Toast.LENGTH_SHORT).show();
         } else {
             startNextActivity();
         }
-    }
-
-    private Date convertToDateObject(String s) {
-        SimpleDateFormat ft = new SimpleDateFormat ("yyyy-MM-dd h:m a");
-        Calendar cal = Calendar.getInstance();
-        String input = cal.get(Calendar.YEAR)+"-"+(cal.get(Calendar.MONTH)+1)+"-"+cal.get(Calendar.DATE)+" " +s;
-
-        Date t = new Date();
-
-        try {
-            t = ft.parse(input);
-        } catch (java.text.ParseException e) {
-            e.printStackTrace();
-        }
-        return t;
     }
 
     private MatchRoute.Destination processDestination(String s) {
@@ -460,7 +385,7 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
                 if (!routeCreated) {
                     routeCreated = createMatchRoute();
                 } else if (!riderFound) {
-                    riderFound = checkForRiders();
+                    riderFound = backend.checkForRiders(matchRoute);
                 } else if (riderFound) {
                     break;
                 }

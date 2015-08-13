@@ -20,9 +20,7 @@ import android.widget.Toast;
 
 import com.gc.materialdesign.views.ButtonRectangle;
 import com.gogreen.greenmachine.R;
-import com.gogreen.greenmachine.parseobjects.PrivateProfile;
-import com.parse.ParseException;
-import com.parse.ParseUser;
+import com.gogreen.greenmachine.interBack.InterBack;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -40,6 +38,8 @@ public class DrivingActivity extends ActionBarActivity {
     private EditText driverCarEditText;
     private EditText matchByEditText;
     private EditText arriveByEditText;
+
+    InterBack backend = new InterBack();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -211,16 +211,9 @@ public class DrivingActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void setDefaultCar() {
-        ParseUser currUser = ParseUser.getCurrentUser();
-        PrivateProfile privProfile = (PrivateProfile) currUser.get("privateProfile");
-        try {
-            privProfile.fetchIfNeeded();
-        } catch(ParseException e) {
-            // Handle fetch fail
-        }
 
-        this.driverCarEditText.setText(privProfile.getDriverCar());
+    private void setDefaultCar() {
+        this.driverCarEditText.setText(backend.getDriverCarInfo());
     }
 
     private void startNextActivity() {
