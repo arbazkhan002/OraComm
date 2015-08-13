@@ -153,7 +153,12 @@ public class InterBack {
         m.initializeMatchRoute(ParseUser.getCurrentUser(), s, destination,
                 MatchRoute.TripStatus.NOT_STARTED, currentCapacity, matchByDate,
                 arriveByDate, driverCar, new ArrayList<PublicProfile>());
-        return m.saveRequest();
+        try {
+            m.save();
+            return true;
+        } catch (ParseException e) {
+            return false;
+        }
     }
 
     public boolean sendDriverRequest(MatchRequest[] riderRequest,
@@ -181,6 +186,7 @@ public class InterBack {
         ArrayList<PublicProfile> riders = matchRoute.getRiders();
         boolean foundRider = !riders.isEmpty();
         Log.i("DebugInterBack", "riderFound " + Boolean.toString(foundRider));
+        Log.i("InterBack", "createMatchRoute "+matchRoute.getObjectId());
         if (foundRider) {
             return true;
         } else {
@@ -211,8 +217,6 @@ public class InterBack {
     public boolean isRiderInRoute(InterUser user, MatchRoute route) {
         ArrayList<PublicProfile> riders = (ArrayList<PublicProfile>) route.getRiders();
         PublicProfile myProfile = user.getPublicProfile();
-        fetchIfNeeded(myProfile);
-
         Iterator profIterator = riders.iterator();
         while(profIterator.hasNext()) {
             PublicProfile riderProfile = (PublicProfile) profIterator.next();

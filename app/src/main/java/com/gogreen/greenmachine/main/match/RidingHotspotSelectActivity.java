@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Toast;
@@ -33,6 +34,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.parse.ParseException;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -413,12 +416,18 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                     InterUser user = new InterUser();
                     user.setUser(backend.getCurrentUser());
                     boolean alreadyRider = backend.isRiderInRoute(user, route);
+                    Log.i("RidingHotspotSelect", "alreadyRider "+Boolean.toString(alreadyRider));
                     if (!alreadyRider) {
                         this.matchRoute = route;
                         this.matchRoute.setCapacity(remainingCapacity - 1);
                         this.matchRoute.addRider(user);
                         this.matchRoute.setStatus(MatchRoute.TripStatus.EN_ROUTE_HOTSPOT);
-                        return this.matchRoute.saveRequest();
+                        try {
+                            this.matchRoute.save();
+                            return true;
+                        } catch (ParseException e) {
+                            return false;
+                        }
                     }
                 }
             } else if (remainingCapacity > 0  && isInTimeWindow(routeCal,myCal,600)) {
@@ -441,7 +450,12 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                         this.matchRoute.setPotentialHotspots(new ArrayList<Hotspot>());
                         this.matchRoute.setStatus(MatchRoute.TripStatus.EN_ROUTE_HOTSPOT);
                         this.matchRoute.setHotspot(hotspot);
-                        return this.matchRoute.saveRequest();
+                        try {
+                            this.matchRoute.save();
+                            return true;
+                        } catch (ParseException e) {
+                            return false;
+                        }
                     }
                 }
             }
