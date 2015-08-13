@@ -178,11 +178,15 @@ public class InterBack {
 
     }
 
+
+
     public boolean checkForRiders(MatchRoute[] marray) {
         MatchRoute matchRoute = marray[0];
-        // MatchRoute should be created so now we peridically check if a rider gets added to our request
-        if (Utils.getInstance().fetchParseObject(matchRoute) == false)
+        try {
+            matchRoute.fetch();
+        } catch (ParseException e) {
             return false;
+        }
         ArrayList<PublicProfile> riders = matchRoute.getRiders();
         boolean foundRider = !riders.isEmpty();
         Log.i("DebugInterBack", "riderFound " + Boolean.toString(foundRider));

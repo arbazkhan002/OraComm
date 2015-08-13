@@ -422,6 +422,8 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                         this.matchRoute.setCapacity(remainingCapacity - 1);
                         this.matchRoute.addRider(user);
                         this.matchRoute.setStatus(MatchRoute.TripStatus.EN_ROUTE_HOTSPOT);
+                        Log.i("RidingHotspotSelect", "createMatchRoute "+this.matchRoute.getObjectId());
+                        Log.i("RidingHotspotSelect", "Hotspot "+this.matchRoute.getHotspot());
                         try {
                             this.matchRoute.save();
                             return true;
@@ -450,6 +452,8 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                         this.matchRoute.setPotentialHotspots(new ArrayList<Hotspot>());
                         this.matchRoute.setStatus(MatchRoute.TripStatus.EN_ROUTE_HOTSPOT);
                         this.matchRoute.setHotspot(hotspot);
+                        Log.i("RidingHotspotSelect", "createMatchRoute-II "+this.matchRoute.getObjectId());
+                        Log.i("RidingHotspotSelect", "Hotspot-II "+this.matchRoute.getHotspot());
                         try {
                             this.matchRoute.save();
                             return true;
