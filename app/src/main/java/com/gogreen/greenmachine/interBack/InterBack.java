@@ -189,8 +189,6 @@ public class InterBack {
         }
         ArrayList<PublicProfile> riders = matchRoute.getRiders();
         boolean foundRider = !riders.isEmpty();
-        Log.i("DebugInterBack", "riderFound " + Boolean.toString(foundRider));
-        Log.i("InterBack", "createMatchRoute "+matchRoute.getObjectId());
         if (foundRider) {
             return true;
         } else {
