@@ -1,5 +1,7 @@
 package com.gogreen.greenmachine.interBack;
 
+import android.util.Log;
+
 import com.gogreen.greenmachine.interBack.objects.InterUser;
 import com.gogreen.greenmachine.main.match.DriverMatchedActivity;
 import com.gogreen.greenmachine.main.match.RiderMatchedActivity;
@@ -151,7 +153,12 @@ public class InterBack {
         m.initializeMatchRoute(ParseUser.getCurrentUser(), s, destination,
                 MatchRoute.TripStatus.NOT_STARTED, currentCapacity, matchByDate,
                 arriveByDate, driverCar, new ArrayList<PublicProfile>());
-        return m.saveRequest();
+        try {
+            m.save();
+            return true;
+        } catch (ParseException e) {
+            return false;
+        }
     }
 
     public boolean sendDriverRequest(MatchRequest[] riderRequest,
@@ -171,12 +178,19 @@ public class InterBack {
 
     }
 
-    public boolean checkForRiders(MatchRoute matchRoute) {
-        // MatchRoute should be created so now we peridically check if a rider gets added to our request
-        if (Utils.getInstance().fetchParseObject(matchRoute) == false)
+
+
+    public boolean checkForRiders(MatchRoute[] marray) {
+        MatchRoute matchRoute = marray[0];
+        try {
+            matchRoute.fetch();
+        } catch (ParseException e) {
             return false;
+        }
         ArrayList<PublicProfile> riders = matchRoute.getRiders();
         boolean foundRider = !riders.isEmpty();
+        Log.i("DebugInterBack", "riderFound " + Boolean.toString(foundRider));
+        Log.i("InterBack", "createMatchRoute "+matchRoute.getObjectId());
         if (foundRider) {
             return true;
         } else {
@@ -207,8 +221,6 @@ public class InterBack {
     public boolean isRiderInRoute(InterUser user, MatchRoute route) {
         ArrayList<PublicProfile> riders = (ArrayList<PublicProfile>) route.getRiders();
         PublicProfile myProfile = user.getPublicProfile();
-        fetchIfNeeded(myProfile);
-
         Iterator profIterator = riders.iterator();
         while(profIterator.hasNext()) {
             PublicProfile riderProfile = (PublicProfile) profIterator.next();

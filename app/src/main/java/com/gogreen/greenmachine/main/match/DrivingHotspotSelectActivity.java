@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Toast;
@@ -347,11 +348,14 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
         // Create a match route
         this.matchRoute = new MatchRoute();
         ArrayList<Hotspot> selectedHotspotsList = new ArrayList<Hotspot>(selectedHotspots);
-        return backend.sendRiderRequest(new MatchRoute[]{matchRoute}, selectedHotspotsList, currentCapacity, driverCar, matchByDate, arriveByDate, destination);
+
+        boolean saved = backend.sendRiderRequest(new MatchRoute[]{this.matchRoute}, selectedHotspotsList,
+                                                      currentCapacity, driverCar, matchByDate, arriveByDate, destination);
+        return saved;
     }
 
     private void processResult() {
-        if ((matchRoute.getRiders()).isEmpty()) {
+        if ((this.matchRoute.getRiders()).isEmpty()) {
             Toast.makeText(DrivingHotspotSelectActivity.this, getString(R.string.progress_no_rider_found), Toast.LENGTH_SHORT).show();
         } else {
             startNextActivity();
@@ -385,7 +389,7 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
                 if (!routeCreated) {
                     routeCreated = createMatchRoute();
                 } else if (!riderFound) {
-                    riderFound = backend.checkForRiders(matchRoute);
+                    riderFound = backend.checkForRiders(new MatchRoute[]{matchRoute});
                 } else if (riderFound) {
                     break;
                 }
