@@ -1,5 +1,7 @@
 package com.gogreen.greenmachine.interBack;
 
+import android.util.Log;
+
 import com.gogreen.greenmachine.interBack.objects.InterUser;
 import com.gogreen.greenmachine.main.match.DriverMatchedActivity;
 import com.gogreen.greenmachine.main.match.RiderMatchedActivity;
@@ -171,12 +173,14 @@ public class InterBack {
 
     }
 
-    public boolean checkForRiders(MatchRoute matchRoute) {
+    public boolean checkForRiders(MatchRoute[] marray) {
+        MatchRoute matchRoute = marray[0];
         // MatchRoute should be created so now we peridically check if a rider gets added to our request
         if (Utils.getInstance().fetchParseObject(matchRoute) == false)
             return false;
         ArrayList<PublicProfile> riders = matchRoute.getRiders();
         boolean foundRider = !riders.isEmpty();
+        Log.i("DebugInterBack", "riderFound " + Boolean.toString(foundRider));
         if (foundRider) {
             return true;
         } else {
