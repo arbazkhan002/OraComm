@@ -32,8 +32,11 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.parse.ParseCloud;
+
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -73,6 +76,7 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
     private MatchRoute.Destination destination;
     private Set<Hotspot> selectedHotspots;
     private InterBack backend = new InterBack();
+    private Boolean isDriverRequesting = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,9 +85,9 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
 
         // Process intent items
         this.currentCapacity = (int) getIntent().getExtras().get("capacity");
-        this.matchByDate = Utils.getInstance().convertToDateObject(getIntent().getExtras().get("matchDate").toString());
-        this.arriveByDate = Utils.getInstance().convertToDateObject(getIntent().getExtras().get("arriveDate").toString());
-        this.destination = processDestination(getIntent().getExtras().get("destination").toString());
+        this.matchByDate = Utils.getInstance().convertToDateObject((String)getIntent().getExtras().get("matchDate"));
+        this.arriveByDate = Utils.getInstance().convertToDateObject((String)getIntent().getExtras().get("arriveDate"));
+        this.destination = processDestination((String)getIntent().getExtras().get("destination"));
         this.driverCar = (String) getIntent().getExtras().get("driverCar");
 
         // Turn on location updates
@@ -91,10 +95,6 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
 
         // Grab server hotspots
         this.serverHotspots = backend.getAllHotspots();
-
-        // Initialize selectedHotspots
-        this.selectedHotspots = new HashSet<Hotspot>();
-
         // Set up the toolbar
         toolbar = (Toolbar) findViewById(R.id.tool_bar);
         setSupportActionBar(toolbar);
@@ -112,6 +112,20 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
         // Update values using data stored in the Bundle.
         updateValuesFromBundle(savedInstanceState);
         buildGoogleApiClient();
+
+        HashMap<String, Object> result = backend.getRequestObject();
+        if (result!= null) {
+            this.matchRoute = (MatchRoute)result.get("route");
+            this.selectedHotspots = (HashSet<Hotspot>) result.get("hotspots");
+            isDriverRequesting = true;
+
+        }
+        else {
+            // Initialize selectedHotspots
+            this.selectedHotspots = new HashSet<Hotspot>();
+        }
+
+        Log.i(DrivingHotspotSelectActivity.class.getSimpleName(), "isDriverRequesting "+isDriverRequesting.toString());
     }
 
     @Override
@@ -250,6 +264,12 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
                     }
                 }
             }
+
+            Log.i(DrivingHotspotSelectActivity.class.getSimpleName(), "isDriverRequesting "+isDriverRequesting.toString());
+            if (isDriverRequesting) {
+                new FindMatchTask().execute();
+            }
+
             updateLocation();
         }
     }
@@ -289,6 +309,10 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
                 if (this.selectedHotspots.contains(h)) {
                     setMarker(marker);
                 }
+            }
+            Log.i(DrivingHotspotSelectActivity.class.getSimpleName(), "isDriverRequesting "+isDriverRequesting.toString());
+            if (isDriverRequesting) {
+                new FindMatchTask().execute();
             }
         } else {
             // Handle the server not getting hotspots
@@ -355,7 +379,7 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
     }
 
     private void processResult() {
-        if ((this.matchRoute.getRiders()).isEmpty()) {
+        if (backend.checkForRiders(new MatchRoute[]{this.matchRoute}) == false) {
             Toast.makeText(DrivingHotspotSelectActivity.this, getString(R.string.progress_no_rider_found), Toast.LENGTH_SHORT).show();
         } else {
             startNextActivity();
@@ -383,16 +407,14 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
             pdLoading.setCancelable(false);
             pdLoading.setCanceledOnTouchOutside(false);
         }
+
         @Override
         protected Void doInBackground(Void... params) {
-            for (int i = 0; i < 100; i++) {
-                if (!routeCreated) {
-                    routeCreated = createMatchRoute();
-                } else if (!riderFound) {
-                    riderFound = backend.checkForRiders(new MatchRoute[]{matchRoute});
-                } else if (riderFound) {
-                    break;
-                }
+            if (!routeCreated) {
+                routeCreated = createMatchRoute();
+            }
+            if (!riderFound) {
+                riderFound = backend.checkForRiders(new MatchRoute[]{matchRoute});
             }
             return null;
         }
@@ -400,7 +422,12 @@ public class DrivingHotspotSelectActivity extends AppCompatActivity implements
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
-            matchRoute.setStatus(MatchRoute.TripStatus.CANCELED);
+            if (riderFound) {
+                matchRoute.setStatus(MatchRoute.TripStatus.EN_ROUTE_HOTSPOT);
+            }
+            else {
+                matchRoute.setStatus(MatchRoute.TripStatus.NOT_STARTED);
+            }
             matchRoute.saveInBackground();
             pdLoading.dismiss();
             processResult();

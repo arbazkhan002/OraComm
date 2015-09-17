@@ -410,6 +410,7 @@ public class RidingHotspotSelectActivity extends ActionBarActivity implements
                 Hotspot routeHotspot = route.getHotspot();
                 backend.fetchIfNeeded(routeHotspot);
 
+
                 // Check if the route hotspot is in selected hotspots
                 if (this.selectedHotspots.contains(routeHotspot)) {
                     // If it is check that the rider isn't already in the route rider (sync issues)

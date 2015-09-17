@@ -67,11 +67,14 @@ public class InterUser {
     }
 
     public String getFirstName() {
-        if (privProfile == null) {
-            getPrivProfile();
+        try {
+            this.privProfile.fetchIfNeeded();
+            firstName = this.privProfile.getFirstName();
+            return firstName;
         }
-        firstName = this.privProfile.getFirstName();
-        return firstName;
+        catch (ParseException e) {
+            return null;
+        }
     }
 
     public void setFirstName(String firstName) {
@@ -79,13 +82,16 @@ public class InterUser {
     }
 
     public String getLastName() {
-        if (privProfile == null) {
-            getPrivProfile();
+        try {
+            this.privProfile.fetchIfNeeded();
+            lastName = privProfile.getLastName();
+            return lastName;
         }
-        lastName = privProfile.getLastName();
-        return lastName;
-    }
+        catch (ParseException e) {
+            return null;
+        }
 
+    }
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }

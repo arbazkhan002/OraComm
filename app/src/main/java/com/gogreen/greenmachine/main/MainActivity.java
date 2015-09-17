@@ -13,6 +13,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,11 +32,13 @@ import com.gogreen.greenmachine.interBack.objects.InterUser;
 import com.gogreen.greenmachine.main.badges.BadgeActivity;
 import com.gogreen.greenmachine.main.login.DispatchActivity;
 import com.gogreen.greenmachine.main.match.DrivingActivity;
+import com.gogreen.greenmachine.main.match.DrivingHotspotSelectActivity;
 import com.gogreen.greenmachine.main.match.RidingActivity;
 import com.gogreen.greenmachine.main.navigation.AboutUsActivity;
 import com.gogreen.greenmachine.main.navigation.NavDrawerAdapter;
 import com.gogreen.greenmachine.main.navigation.SettingsActivity;
 import com.gogreen.greenmachine.parseobjects.Hotspot;
+import com.gogreen.greenmachine.parseobjects.MatchRoute;
 import com.gogreen.greenmachine.util.Ifunction;
 import com.gogreen.greenmachine.util.Tuple;
 import com.google.android.gms.common.ConnectionResult;
@@ -53,8 +56,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.api.client.http.GenericUrl;
+import com.parse.Parse;
+import com.parse.ParseInstallation;
+import com.parse.ParsePush;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -111,6 +121,9 @@ public class MainActivity extends ActionBarActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //Parse.initialize(this, "DkQH1rfHp0BbHvNBbs5h5S1cQvcvL3JgPT2xehMe", "Y20n9WanAfKHUQekH9QMEbn6dv2BzOfGXAj3yeIc");
+        //ParseInstallation.getCurrentInstallation().saveInBackground();
+        //ParsePush.subscribeInBackground("Giants");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -233,6 +246,18 @@ public class MainActivity extends ActionBarActivity implements
         // Update values using data stored in the Bundle.
         updateValuesFromBundle(savedInstanceState);
         buildGoogleApiClient();
+
+        HashMap<String, Object> result = new HashMap<String, Object>();
+        if (backend.isDriverRequesting(new HashMap[]{result})) {
+            Log.i(MainActivity.class.getSimpleName(), "driver: " + result.get("driverCar"));
+            Intent intent = new Intent(MainActivity.this, DrivingHotspotSelectActivity.class);
+            intent.putExtra("capacity", (Integer)(result.get("capacity")));
+            intent.putExtra("matchDate", (String)result.get("matchDate)"));
+            intent.putExtra("arriveDate", (String)result.get("arriveDate)"));
+            intent.putExtra("destination", (String)result.get("destination"));
+            intent.putExtra("driverCar", (String)result.get("driverCar"));
+            startActivity(intent);
+        }
     }
 
     @Override
@@ -346,7 +371,7 @@ public class MainActivity extends ActionBarActivity implements
         mCurrentLocation = location;
         //mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
         updateLocation();
-        simulateDriverStep();
+        //simulateDriverStep();
     }
 
     @Override

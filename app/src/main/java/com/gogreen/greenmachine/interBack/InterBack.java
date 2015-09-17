@@ -178,22 +178,51 @@ public class InterBack {
 
     }
 
-
+    public ArrayList<PublicProfile> getRiders(MatchRoute matchRoute) {
+       try {
+           matchRoute.fetchIfNeeded();
+           ArrayList<PublicProfile> riders = (ArrayList<PublicProfile>) matchRoute.get("riders");
+           Log.i(InterBack.class.getSimpleName(), "routeId: "+matchRoute.getObjectId());
+           Log.i(InterBack.class.getSimpleName(), "ridersList: "+Integer.toString(riders.size()));
+           return riders;
+       }
+       catch (ParseException e) {
+           e.printStackTrace();
+           return null;
+       }
+    }
 
     public boolean checkForRiders(MatchRoute[] marray) {
-        MatchRoute matchRoute = marray[0];
-        try {
-            matchRoute.fetch();
-        } catch (ParseException e) {
-            return false;
+        HashMap<String, Object> cloudParams = new HashMap<String, Object>();
+        Boolean riderFound = false;
+        Log.i(InterBack.class.getSimpleName(), "checkForRiders: ");
+
+        for (int i=0; i<10000; i++) {
+            try {
+                MatchRoute matchRoute = marray[0];
+                matchRoute.fetchIfNeeded();
+                cloudParams.put("matchRouteId", matchRoute.getObjectId());
+                riderFound = ParseCloud.callFunction("checkForRiders", cloudParams);
+                Log.i(InterBack.class.getSimpleName(), "RouteId: "+matchRoute.getObjectId());
+                Log.i(InterBack.class.getSimpleName(), "checkForRiders: "+riderFound.toString());
+            } catch (ParseException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            if (riderFound) {
+                return true;
+            }
+
+            try {
+                Thread.sleep(5000);
+            }
+            catch (java.lang.InterruptedException e){
+                e.printStackTrace();
+            }
         }
-        ArrayList<PublicProfile> riders = matchRoute.getRiders();
-        boolean foundRider = !riders.isEmpty();
-        if (foundRider) {
-            return true;
-        } else {
-            return false;
-        }
+
+        return false;
     }
 
     // Grab all routes from the server
@@ -233,8 +262,98 @@ public class InterBack {
         return new LatLng(p.getLatitude(), p.getLongitude());
     }
 
+    //get MatchRoute of the currentUser
+    public HashMap<String, Object> getRequestObject() {
+        HashMap<String, Object> result = new HashMap<String, Object>();
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        List<MatchRoute> matchRoutes = new ArrayList<MatchRoute>();
+        boolean foundRoute = false;
+
+        // Query for all MatchRoutes
+        ParseQuery<MatchRoute> matchRoutesQuery = ParseQuery.getQuery("MatchRoute");
+        try {
+            matchRoutes = new ArrayList<MatchRoute>(matchRoutesQuery.find());
+        } catch (ParseException e) {
+            // handle later since low on time
+        }
+
+        Iterator routeIterator = matchRoutes.iterator();
+        while (routeIterator.hasNext() && !foundRoute) {
+            MatchRoute route = (MatchRoute) routeIterator.next();
+            fetchIfNeeded(route);
+
+            if (route.getDriver().getObjectId().equals(currentUser.getObjectId()) && route.getStatus() == MatchRoute.TripStatus.NOT_STARTED) {
+                result.put("capacity", route.getCapacity());
+                String matchBy = route.getMatchBy().toString();
+                String arriveBy = route.getArriveBy().toString();
+                String destination = route.getDestination().toString();
+                result.put("matchDate", matchBy );
+                result.put("arriveDate", arriveBy);
+                result.put("destination", destination);
+                result.put("driverCar", route.getCar());
+                Set<Hotspot> selectedHotspots = new HashSet<Hotspot>();
+
+                for (Hotspot h: route.getPotentialHotspots())
+                    selectedHotspots.add(h);
+                result.put("hotspots", selectedHotspots);
+
+                Log.i(InterBack.class.getSimpleName(), "matchDate " + matchBy);
+                foundRoute = true;
+            }
+        }
+
+        if (foundRoute == true)
+           return result;
+        else
+            return null;
+    }
+
+    // Is the current user a driver requesting for riders
+    public Boolean isDriverRequesting(HashMap<String, Object>[] r) {
+        HashMap<String, Object> result = r[0];
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        List<MatchRoute> matchRoutes = new ArrayList<MatchRoute>();
+        boolean foundRoute = false;
+
+        // Query for all MatchRoutes
+        ParseQuery<MatchRoute> matchRoutesQuery = ParseQuery.getQuery("MatchRoute");
+        try {
+            matchRoutes = new ArrayList<MatchRoute>(matchRoutesQuery.find());
+        } catch (ParseException e) {
+            // handle later since low on time
+        }
+
+        Iterator routeIterator = matchRoutes.iterator();
+        while (routeIterator.hasNext() && !foundRoute) {
+            MatchRoute route = (MatchRoute) routeIterator.next();
+            fetchIfNeeded(route);
+
+            if (route.getDriver().getObjectId().equals(currentUser.getObjectId()) && route.getStatus() == MatchRoute.TripStatus.NOT_STARTED) {
+                result.put("capacity", route.getCapacity());
+                String matchBy = route.getMatchBy().toString();
+                String arriveBy = route.getArriveBy().toString();
+                String destination = route.getDestination().toString();
+                result.put("matchDate", matchBy );
+                result.put("arriveDate", arriveBy);
+                result.put("destination", destination);
+                result.put("driverCar", route.getCar());
+                Set<Hotspot> selectedHotspots = new HashSet<Hotspot>();
+                MatchRoute savedRoute = route;
+                for (Hotspot h: route.getPotentialHotspots())
+                    selectedHotspots.add(h);
+                result.put("hotspots", selectedHotspots);
+                result.put("route", savedRoute);
+
+                Log.i(InterBack.class.getSimpleName(), "matchDate " + matchBy);
+                foundRoute = true;
+            }
+        }
+
+        return foundRoute;
+    }
+
     // Instead of passing a single instance, passing an array for a need of pass by reference
-    public void getDriverInfo(DriverMatchedActivity[] driverMatch) {
+    public Boolean getDriverInfo(DriverMatchedActivity[] driverMatch) {
         DriverMatchedActivity t = driverMatch[0];
         ParseUser currentUser = ParseUser.getCurrentUser();
         List<MatchRoute> matchRoutes = new ArrayList<MatchRoute>();
@@ -275,9 +394,12 @@ public class InterBack {
                 foundRoute = true;
             }
         }
+
+        return foundRoute;
     }
 
-    public void getRiderInfo(RiderMatchedActivity[] riderMatch) {
+
+    public Boolean getRiderInfo(RiderMatchedActivity[] riderMatch) {
         RiderMatchedActivity t = riderMatch[0];
         ParseUser currentUser = ParseUser.getCurrentUser();
         PublicProfile curUserPublicProfile = (PublicProfile) currentUser.get("publicProfile");
@@ -326,5 +448,7 @@ public class InterBack {
                 }
             }
         }
+
+        return foundRoute;
     }
 }
